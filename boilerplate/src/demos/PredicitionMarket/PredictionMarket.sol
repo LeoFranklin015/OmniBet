@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
 import "./LMSRLibrary.sol";
-
 contract PredictionMarket is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -346,8 +345,9 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
             noBalances[marketId][account] += amount.unwrap();
             markets[marketId].totalNo += amount.unwrap();
         }
-
     }
 
-    
+
+
+
 }
