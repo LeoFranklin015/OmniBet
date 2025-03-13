@@ -7,9 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
-import "./NoToken.sol";
-import "./YesToken.sol";
+import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
+import "./Tokens/NoToken.sol";
+import "./Tokens/YesToken.sol";
 
 contract PredictionMarket is Ownable, IERC1155Receiver, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
@@ -81,7 +81,7 @@ event RewardClaimed(
         address _priceToken,
         address _yesToken,
         address _noToken
-    ) Ownable(_creator) {
+    ) Ownable(msg.sender) {
         require(_priceToken != address(0), "Invalid price token");
         require(_yesToken != address(0), "Invalid yes token");
         require(_noToken != address(0), "Invalid no token");
@@ -119,6 +119,7 @@ event RewardClaimed(
         noToken.mint(address(this), marketId, INITIAL_LIQUIDITY, "");
         markets[marketId].qYes = ud(INITIAL_LIQUIDITY);
         markets[marketId].qNo = ud(INITIAL_LIQUIDITY);
+        markets[marketId].liquidityInitialized = true;
     }
 
     // IERC1155Receiver implementation
@@ -148,7 +149,7 @@ event RewardClaimed(
         return interfaceId == type(IERC1155Receiver).interfaceId;
     }
 
-    function resolve(uint256 marketId, bool isYesWon , bytes calldata proof) public onlyResolver(marketId) {
+    function resolve(uint256 marketId, bool isYesWon, bytes calldata proof) public onlyResolver(marketId) {
         // DISABLED TO SHOW DEMO. ENABLE FOR PRODUCTION
         // require(block.timestamp >= markets[marketId].endTime, "Market has not ended");
 
@@ -160,9 +161,8 @@ event RewardClaimed(
 
         markets[marketId].resolved = true;
         markets[marketId].won =isYesWon;
-        markets[marketId].totalPriceToken = priceToken.balanceOf(address(this));
 
-        emit MarketResolved(marketId, markets[marketId].won , markets[marketId].totalPriceToken);
+        emit MarketResolved(marketId, markets[marketId].won, markets[marketId].totalPriceToken);
     }
 
     /**
@@ -172,6 +172,7 @@ event RewardClaimed(
      * @return price The cost of the specified amount of tokens.
      */
     function getCost(
+        uint256 marketId,
         bool isYesToken,
         UD60x18 amount
     ) public view returns (UD60x18 price) {
@@ -216,12 +217,12 @@ event RewardClaimed(
      * @param isYesToken Indicates if the token being purchased is YES (true) or NO (false).
      * @param amount The amount of tokens to purchase.
      */
-    function buy(bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
+    function buy(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
         require(amount.unwrap() <= type(uint128).max, "Amount too large"); // Prevent overflow
 
         // Calculate cost using LMSR
-        UD60x18 cost = getCost(isYesToken, amount);
+        UD60x18 cost = getCost(marketId, isYesToken, amount);
 
         // Check liquidity first
         if (isYesToken) {
@@ -268,15 +269,17 @@ event RewardClaimed(
             );
         }
 
+        markets[marketId].totalPriceToken += cost.unwrap();
+
         emit TokenOperation(msg.sender, marketId, 1, isYesToken ? 1 : 2, amount.unwrap(), cost.unwrap());
     }
 
-    function sell(bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
+    function sell(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
         require(amount.unwrap() <= type(uint128).max, "Amount too large"); // Prevent overflow
 
         // Calculate return amount
-        UD60x18 returnAmount = getCost(isYesToken, amount);
+        UD60x18 returnAmount = getCost(marketId, isYesToken, amount);
 
         // Check user balance first
         if (isYesToken) {
@@ -323,10 +326,12 @@ event RewardClaimed(
         // Transfer price tokens back to user using SafeERC20
         priceToken.safeTransfer(msg.sender, returnAmount.unwrap());
 
+        markets[marketId].totalPriceToken -= returnAmount.unwrap();
+
         emit TokenOperation(msg.sender, marketId, 2, isYesToken ? 1 : 2, amount.unwrap(), returnAmount.unwrap());
     }
 
-    function claimReward() public nonReentrant whenNotPaused {
+    function claimReward(uint256 marketId) public nonReentrant whenNotPaused {
         require(markets[marketId].resolved, "Market not resolved");
 
         uint256 reward = 0;
@@ -370,13 +375,13 @@ event RewardClaimed(
     }
 
     // Emergency functions
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(uint256 marketId, address token, uint256 amount) external onlyOwner {
         require(markets[marketId].resolved, "Market not resolved");
         IERC20(token).safeTransfer(owner(), amount);
     }
 
     // Emergency function to add liquidity if needed
-    function addLiquidity(uint256 amount) external onlyOwner marketActive(marketId) {
+    function addLiquidity(uint256 marketId, uint256 amount) external onlyOwner marketActive(marketId) {
         yesToken.mint(address(this), marketId, amount, "");
         noToken.mint(address(this), marketId, amount, "");
         // Note: This should rarely/never be needed due to LMSR mechanics
@@ -390,6 +395,7 @@ event RewardClaimed(
      * @return price The price of the token in fixed-point format.
      */
     function getTokenPrice(
+        uint256 marketId,
         bool isYesToken
     ) public view returns (UD60x18 price) {
         UD60x18 numerator;
@@ -410,16 +416,17 @@ event RewardClaimed(
      * @notice Returns the current state of the market.
      * @return marketState The current state of the market.
      */
-    function getMarketState() public view returns (Market memory marketState) {
+    function getMarketState(uint256 marketId) public view returns (Market memory marketState) {
         return markets[marketId];
     }
 
     /**
      * @notice Returns the current quantities of YES and NO tokens.
+     * @param marketId The ID of the market to query the quantities for.
      * @return yesQuantity The current quantity of YES tokens.
      * @return noQuantity The current quantity of NO tokens.
      */
-    function getTokenQuantities()
+    function getTokenQuantities(uint256 marketId)
         public
         view
         returns (UD60x18 yesQuantity, UD60x18 noQuantity)
@@ -429,12 +436,14 @@ event RewardClaimed(
 
     /**
      * @notice Returns the current balances of the price token, YES token, and NO token for a given address.
+     * @param marketId The ID of the market to query the balances for.
      * @param account The address to query the balances for.
      * @return priceTokenBalance The balance of the price token.
      * @return yesTokenBalance The balance of the YES token.
      * @return noTokenBalance The balance of the NO token.
      */
     function getBalances(
+        uint256 marketId,
         address account
     )
         public
@@ -450,10 +459,6 @@ event RewardClaimed(
         noTokenBalance = noToken.balanceOf(account, marketId);
     }
 
-    function setResolver(address newResolver) public onlyOwner {
-        require(newResolver != address(0), "Invalid resolver address");
-        resolver = newResolver;
-    }
 
     function createMarket(
         string memory _question,
@@ -462,7 +467,7 @@ event RewardClaimed(
         // Creates new market with a unique ID
         // Stores it in the mapping
         // Returns the market ID
-        marketId = nextMarketId++;
+        marketId = marketCount++;
         markets[marketId] = Market({
             id: marketId,
             question: _question,
@@ -475,17 +480,15 @@ event RewardClaimed(
             totalPriceToken: 0,
             qYes: ud(0),
             qNo: ud(0),
-            liquidityInitialized: false
+            liquidityInitialized: false,
+            creator: msg.sender
         });
-        allMarketIds.push(marketId);
+        initializeLiquidity(marketId);
         return marketId;
     }
 
-    function getAllMarketIds() public view returns (uint256[] memory) {
-        return allMarketIds;
-    }
 
     function getMarketCount() public view returns (uint256) {
-        return allMarketIds.length;
+        return marketCount;
     }
 }
