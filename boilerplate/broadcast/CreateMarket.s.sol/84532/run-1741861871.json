@@ -1,0 +1,33 @@
+{
+  "transactions": [
+    {
+      "hash": null,
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xb8b6192e296a97b1cd5e065a9a66f82f148272ae",
+      "function": "createMarket(string,uint256)",
+      "arguments": [
+        "Will ETH price exceed $5000 by the end of 2024?",
+        "1744453858"
+      ],
+      "transaction": {
+        "from": "0x1804c8ab1f12e6bbf3894d4083f33e07309d1f38",
+        "to": "0xb8b6192e296a97b1cd5e065a9a66f82f148272ae",
+        "gas": "0x6df0a",
+        "value": "0x0",
+        "input": "0x883c84c100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000067fa40e2000000000000000000000000000000000000000000000000000000000000002f57696c6c20455448207072696365206578636565642024353030302062792074686520656e64206f6620323032343f0000000000000000000000000000000000",
+        "nonce": "0x0",
+        "chainId": "0x14a34"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [],
+  "returns": {},
+  "timestamp": 1741861871,
+  "chain": 84532,
+  "commit": "f7b4e9c"
+}

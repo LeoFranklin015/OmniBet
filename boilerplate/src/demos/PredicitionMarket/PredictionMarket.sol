@@ -2,21 +2,16 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
-import "./Tokens/NoToken.sol";
-import "./Tokens/YesToken.sol";
+import "./LMSRLibrary.sol";
 
-contract PredictionMarket is Ownable, IERC1155Receiver, ReentrancyGuard, Pausable {
+contract PredictionMarket is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public priceToken;
-    YesToken public yesToken;
-    NoToken public noToken;
 
     struct Market {
         uint256 id; // unique identifier for the market
@@ -34,6 +29,10 @@ contract PredictionMarket is Ownable, IERC1155Receiver, ReentrancyGuard, Pausabl
         address creator; // creator of the market
     }
 
+    // Track user balances internally
+    mapping(uint256 => mapping(address => uint256)) public yesBalances;
+    mapping(uint256 => mapping(address => uint256)) public noBalances;
+    
     mapping(uint256 => Market) public markets;
     uint256 public marketCount;
 
@@ -43,22 +42,22 @@ contract PredictionMarket is Ownable, IERC1155Receiver, ReentrancyGuard, Pausabl
     UD60x18 private immutable LIQUIDITY_PARAMETER;
 
     event LiquidityAdded(
-    address indexed provider,
-    uint256 indexed marketId,
-    uint256 amount
-);
+        address indexed provider,
+        uint256 indexed marketId,
+        uint256 amount
+    );
 
-   event MarketResolved(
-    uint256 indexed marketId,
-    bool result, // true for YES, false for NO
-    uint256 totalPriceToken
-);
-event RewardClaimed(
-    address indexed user,
-    uint256 indexed marketId,
-    uint256 rewardAmount
-);
-
+    event MarketResolved(
+        uint256 indexed marketId,
+        bool result, // true for YES, false for NO
+        uint256 totalPriceToken
+    );
+    
+    event RewardClaimed(
+        address indexed user,
+        uint256 indexed marketId,
+        uint256 rewardAmount
+    );
 
     event TokenOperation(
         address indexed user,
@@ -69,35 +68,27 @@ event RewardClaimed(
         uint256 cost
     );
 
-
     event EmergencyLiquidityAdded(
-    address indexed owner,
-    uint256 indexed marketId,
-    uint256 amount
-);
+        address indexed owner,
+        uint256 indexed marketId,
+        uint256 amount
+    );
 
-event MarketCreated(
-    uint256 indexed marketId,
-    string question,
-    uint256 endTime,
-    address creator
-);
-
+    event MarketCreated(
+        uint256 indexed marketId,
+        string question,
+        uint256 endTime,
+        address creator
+    );
 
     constructor(
-        address _priceToken,
-        address _yesToken,
-        address _noToken
+        address _priceToken
     ) Ownable(msg.sender) {
         require(_priceToken != address(0), "Invalid price token");
-        require(_yesToken != address(0), "Invalid yes token");
-        require(_noToken != address(0), "Invalid no token");
         
         DECIMALS = ud(1e18);
         LIQUIDITY_PARAMETER = ud(10e18);
         priceToken = IERC20(_priceToken);
-        yesToken = YesToken(_yesToken);
-        noToken = NoToken(_noToken);
     }
 
     modifier onlyResolver(uint256 marketId) {
@@ -117,43 +108,16 @@ event MarketCreated(
         _;
     }
 
-    function initializeLiquidity(uint256 marketId) public marketActive(marketId) nonReentrant whenNotPaused {
+    function initializeLiquidity(uint256 marketId) public marketActive(marketId) nonReentrant {
         require(
             markets[marketId].qYes.unwrap() == 0 && markets[marketId].qNo.unwrap() == 0,
             "Liquidity already initialized"
         );
-        yesToken.mint(address(this), marketId, INITIAL_LIQUIDITY, "");
-        noToken.mint(address(this), marketId, INITIAL_LIQUIDITY, "");
+        
+        // Just update the internal state instead of minting tokens
         markets[marketId].qYes = ud(INITIAL_LIQUIDITY);
         markets[marketId].qNo = ud(INITIAL_LIQUIDITY);
         markets[marketId].liquidityInitialized = true;
-    }
-
-    // IERC1155Receiver implementation
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC1155Received.selector;
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC1155BatchReceived.selector;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
-        return interfaceId == type(IERC1155Receiver).interfaceId;
     }
 
     function resolve(uint256 marketId, bool isYesWon, bytes calldata proof) public onlyResolver(marketId) {
@@ -165,9 +129,8 @@ event MarketCreated(
 
         require(!markets[marketId].resolved, "Market already resolved");
 
-
         markets[marketId].resolved = true;
-        markets[marketId].won =isYesWon;
+        markets[marketId].won = isYesWon;
 
         emit MarketResolved(marketId, markets[marketId].won, markets[marketId].totalPriceToken);
     }
@@ -185,38 +148,13 @@ event MarketCreated(
     ) public view returns (UD60x18 price) {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
 
-        // Current total cost
-        UD60x18 totalCost = LIQUIDITY_PARAMETER.mul(
-            markets[marketId].qYes
-                .div(LIQUIDITY_PARAMETER)
-                .exp()
-                .add(markets[marketId].qNo.div(LIQUIDITY_PARAMETER).exp())
-                .ln()
+        return MarketMath.getCost(
+            markets[marketId].qYes,
+            markets[marketId].qNo,
+            isYesToken,
+            amount,
+            LIQUIDITY_PARAMETER
         );
-
-        // New cost after adding the tokens
-        UD60x18 newCost;
-        if (isYesToken) {
-            newCost = LIQUIDITY_PARAMETER.mul(
-                markets[marketId].qYes
-                    .add(amount)
-                    .div(LIQUIDITY_PARAMETER)
-                    .exp()
-                    .add(markets[marketId].qNo.div(LIQUIDITY_PARAMETER).exp())
-                    .ln()
-            );
-        } else {
-            newCost = LIQUIDITY_PARAMETER.mul(
-                markets[marketId].qYes
-                    .div(LIQUIDITY_PARAMETER)
-                    .exp()
-                    .add(markets[marketId].qNo.add(amount).div(LIQUIDITY_PARAMETER).exp())
-                    .ln()
-            );
-        }
-
-        // Price is the difference between new and current costs
-        price = newCost.sub(totalCost);
     }
 
     /**
@@ -224,25 +162,12 @@ event MarketCreated(
      * @param isYesToken Indicates if the token being purchased is YES (true) or NO (false).
      * @param amount The amount of tokens to purchase.
      */
-    function buy(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
+    function buy(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
         require(amount.unwrap() <= type(uint128).max, "Amount too large"); // Prevent overflow
 
         // Calculate cost using LMSR
         UD60x18 cost = getCost(marketId, isYesToken, amount);
-
-        // Check liquidity first
-        if (isYesToken) {
-            require(
-                yesToken.balanceOf(address(this), marketId) >= amount.unwrap(),
-                "Insufficient liquidity"
-            );
-        } else {
-            require(
-                noToken.balanceOf(address(this), marketId) >= amount.unwrap(),
-                "Insufficient liquidity"
-            );
-        }
 
         // Transfer price token from user using SafeERC20
         priceToken.safeTransferFrom(msg.sender, address(this), cost.unwrap());
@@ -251,94 +176,22 @@ event MarketCreated(
         if (isYesToken) {
             markets[marketId].qYes = markets[marketId].qYes.add(amount);
             markets[marketId].totalYes = markets[marketId].totalYes + amount.unwrap();
+            // Update user's balance
+            yesBalances[marketId][msg.sender] += amount.unwrap();
         } else {
             markets[marketId].qNo = markets[marketId].qNo.add(amount);
             markets[marketId].totalNo = markets[marketId].totalNo + amount.unwrap();
+            // Update user's balance
+            noBalances[marketId][msg.sender] += amount.unwrap();
         }
+        
         markets[marketId].totalStaked = markets[marketId].totalStaked + amount.unwrap();
-
-        // Transfer prediction tokens to user
-        if (isYesToken) {
-            yesToken.safeTransferFrom(
-                address(this),
-                msg.sender,
-                marketId,
-                amount.unwrap(),
-                ""
-            );
-        } else {
-            noToken.safeTransferFrom(
-                address(this),
-                msg.sender,
-                marketId,
-                amount.unwrap(),
-                ""
-            );
-        }
-
         markets[marketId].totalPriceToken += cost.unwrap();
 
         emit TokenOperation(msg.sender, marketId, 1, isYesToken ? 1 : 2, amount.unwrap(), cost.unwrap());
     }
 
-    function sell(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) nonReentrant whenNotPaused {
-        require(amount.unwrap() > 0, "Amount must be greater than zero");
-        require(amount.unwrap() <= type(uint128).max, "Amount too large"); // Prevent overflow
-
-        // Calculate return amount
-        UD60x18 returnAmount = getCost(marketId, isYesToken, amount);
-
-        // Check user balance first
-        if (isYesToken) {
-            require(
-                yesToken.balanceOf(msg.sender, marketId) >= amount.unwrap(),
-                "Insufficient balance"
-            );
-        } else {
-            require(
-                noToken.balanceOf(msg.sender, marketId) >= amount.unwrap(),
-                "Insufficient balance"
-            );
-        }
-
-        // Update state
-        if (isYesToken) {
-            markets[marketId].qYes = markets[marketId].qYes.sub(amount);
-            markets[marketId].totalYes = markets[marketId].totalYes - amount.unwrap();
-        } else {
-            markets[marketId].qNo = markets[marketId].qNo.sub(amount);
-            markets[marketId].totalNo = markets[marketId].totalNo - amount.unwrap();
-        }
-        markets[marketId].totalStaked = markets[marketId].totalStaked - amount.unwrap();
-
-        // Transfer tokens from user to contract
-        if (isYesToken) {
-            yesToken.safeTransferFrom(
-                msg.sender,
-                address(this),
-                marketId,
-                amount.unwrap(),
-                ""
-            );
-        } else {
-            noToken.safeTransferFrom(
-                msg.sender,
-                address(this),
-                marketId,
-                amount.unwrap(),
-                ""
-            );
-        }
-
-        // Transfer price tokens back to user using SafeERC20
-        priceToken.safeTransfer(msg.sender, returnAmount.unwrap());
-
-        markets[marketId].totalPriceToken -= returnAmount.unwrap();
-
-        emit TokenOperation(msg.sender, marketId, 2, isYesToken ? 1 : 2, amount.unwrap(), returnAmount.unwrap());
-    }
-
-    function claimReward(uint256 marketId) public nonReentrant whenNotPaused {
+    function claimReward(uint256 marketId) public nonReentrant {
         require(markets[marketId].resolved, "Market not resolved");
 
         uint256 reward = 0;
@@ -348,9 +201,9 @@ event MarketCreated(
         require(totalWinningStake > 0, "No winning stake");
 
         if (markets[marketId].won) {
-            userBalance = yesToken.balanceOf(msg.sender, marketId);
+            userBalance = yesBalances[marketId][msg.sender];
         } else {
-            userBalance = noToken.balanceOf(msg.sender, marketId);
+            userBalance = noBalances[marketId][msg.sender];
         }
 
         require(userBalance > 0, "No tokens held to claim rewards");
@@ -362,23 +215,14 @@ event MarketCreated(
         // Transfer reward to user using SafeERC20
         priceToken.safeTransfer(msg.sender, reward);
 
-        // Burn user's prediction tokens
+        // Clear user's balance instead of burning tokens
         if (markets[marketId].won) {
-            yesToken.burn(msg.sender, marketId, userBalance);
+            yesBalances[marketId][msg.sender] = 0;
         } else {
-            noToken.burn(msg.sender, marketId, userBalance);
+            noBalances[marketId][msg.sender] = 0;
         }
 
         emit RewardClaimed(msg.sender, marketId, reward);
-    }
-
-    // Admin functions
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
     }
 
     // Emergency functions
@@ -389,9 +233,9 @@ event MarketCreated(
 
     // Emergency function to add liquidity if needed
     function addLiquidity(uint256 marketId, uint256 amount) external onlyOwner marketActive(marketId) {
-        yesToken.mint(address(this), marketId, amount, "");
-        noToken.mint(address(this), marketId, amount, "");
-        // Note: This should rarely/never be needed due to LMSR mechanics
+        // Just update the internal state instead of minting tokens
+        markets[marketId].qYes = markets[marketId].qYes.add(ud(amount));
+        markets[marketId].qNo = markets[marketId].qNo.add(ud(amount));
 
         emit EmergencyLiquidityAdded(msg.sender, marketId, amount);
     }
@@ -405,18 +249,12 @@ event MarketCreated(
         uint256 marketId,
         bool isYesToken
     ) public view returns (UD60x18 price) {
-        UD60x18 numerator;
-        UD60x18 denominator = markets[marketId].qYes.div(LIQUIDITY_PARAMETER).exp().add(
-            markets[marketId].qNo.div(LIQUIDITY_PARAMETER).exp()
+        return MarketMath.getTokenPrice(
+            markets[marketId].qYes,
+            markets[marketId].qNo,
+            isYesToken,
+            LIQUIDITY_PARAMETER
         );
-
-        if (isYesToken) {
-            numerator = markets[marketId].qYes.div(LIQUIDITY_PARAMETER).exp();
-        } else {
-            numerator = markets[marketId].qNo.div(LIQUIDITY_PARAMETER).exp();
-        }
-
-        price = numerator.div(denominator);
     }
 
     /**
@@ -462,15 +300,14 @@ event MarketCreated(
         )
     {
         priceTokenBalance = priceToken.balanceOf(account);
-        yesTokenBalance = yesToken.balanceOf(account, marketId);
-        noTokenBalance = noToken.balanceOf(account, marketId);
+        yesTokenBalance = yesBalances[marketId][account];
+        noTokenBalance = noBalances[marketId][account];
     }
-
 
     function createMarket(
         string memory _question,
         uint256 _endTime
-    ) external whenNotPaused returns (uint256 marketId) {
+    ) external returns (uint256 marketId) {
         // Creates new market with a unique ID
         // Stores it in the mapping
         // Returns the market ID
@@ -495,8 +332,22 @@ event MarketCreated(
         return marketId;
     }
 
-
     function getMarketCount() public view returns (uint256) {
         return marketCount;
     }
+
+    function updateMarket(uint256 marketId , bool isYesToken , UD60x18 amount , address account) public {
+        if (isYesToken) {
+            markets[marketId].qYes = markets[marketId].qYes.add(amount);
+            yesBalances[marketId][account] += amount.unwrap();
+            markets[marketId].totalYes += amount.unwrap();
+        } else {
+            markets[marketId].qNo = markets[marketId].qNo.add(amount);
+            noBalances[marketId][account] += amount.unwrap();
+            markets[marketId].totalNo += amount.unwrap();
+        }
+
+    }
+
+    
 }

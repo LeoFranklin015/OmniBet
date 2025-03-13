@@ -13,3 +13,9 @@
 [submodule "boilerplate/lib/prb-math"]
 	path = boilerplate/lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+[submodule "boilerplate/lib/v2-periphery"]
+	path = boilerplate/lib/v2-periphery
+	url = https://github.com/Uniswap/v2-periphery
+[submodule "boilerplate/lib/v2-core"]
+	path = boilerplate/lib/v2-core
+	url = https://github.com/Uniswap/v2-core

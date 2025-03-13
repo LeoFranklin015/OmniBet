@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 
 import '../../../lib/reactive-lib/src/abstract-base/AbstractCallback.sol';
 
-contract BasicDemoL1Callback is AbstractCallback {
+contract DemoCallback is AbstractCallback {
     event CallbackReceived(
         address indexed origin,
         address indexed sender,
@@ -16,7 +16,7 @@ contract BasicDemoL1Callback is AbstractCallback {
 
     constructor(address _callback_sender) AbstractCallback(_callback_sender) payable {}
 
-    function callback(address , uint256 marketId , string memory question , uint256 endTime , address creator)
+    function callback( uint256 marketId , string memory question , uint256 endTime , address creator)
         external
         authorizedSenderOnly
 

@@ -68,6 +68,38 @@ contract CrossChainReactiveAggregator is IReactive, AbstractReactive {
         }
     }
 
+    // Specialized reaction function for MarketCreated events
+    function reactToMarketCreated(
+        uint256 chain_id,
+        address _contract,
+        uint256 topic_0, // Event signature hash
+        uint256 topic_1, // marketId (indexed)
+        uint256 topic_2, // Not used in this event (no second indexed parameter)
+        uint256 topic_3, // Not used in this event (no third indexed parameter)
+        bytes calldata data, // Contains non-indexed parameters (question, endTime, creator)
+        uint256 /* block_number */,
+        uint256 /* op_code */
+    ) external vmOnly {
+        // Log the received MarketCreated event
+        emit Event(chain_id, _contract, topic_0, topic_1, topic_2, topic_3, data, ++counter);
+        
+        // Parse the non-indexed parameters from data
+        // MarketCreated event has: string question, uint256 endTime, address creator as non-indexed
+        (string memory question, uint256 endTime, address creator) = abi.decode(data, (string, uint256, address));
+        
+        // Prepare callback data with market information
+        bytes memory payload = abi.encodeWithSignature(
+            "marketCreatedCallback(uint256,string,uint256,address)",
+            topic_1, // marketId
+            question,
+            endTime,
+            creator
+        );
+        
+        // Send notification to the callback address
+        emit Callback(chain_id, _callback, GAS_LIMIT, payload);
+    }
+
     // Methods for testing environment only
 
     function pretendVm() external {
