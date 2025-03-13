@@ -1,3 +1,15 @@
 [submodule "contract/lib/prb-math"]
 	path = contract/lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+[submodule "boilerplate/lib/forge-std"]
+	path = boilerplate/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "boilerplate/lib/openzeppelin-contracts"]
+	path = boilerplate/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "boilerplate/lib/reactive-lib"]
+	path = boilerplate/lib/reactive-lib
+	url = https://github.com/Reactive-Network/reactive-lib
+[submodule "boilerplate/lib/prb-math"]
+	path = boilerplate/lib/prb-math
+	url = https://github.com/PaulRBerg/prb-math
