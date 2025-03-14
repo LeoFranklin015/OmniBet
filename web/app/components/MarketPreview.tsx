@@ -1,19 +1,41 @@
 import Link from "next/link";
 import { Clock, Check, X } from "lucide-react";
-import type { Market } from "../data/markets";
+
+export interface Market {
+  id: string;
+  question: string;
+  endTime: string; // timestamp in seconds
+  resolved: boolean;
+  result: boolean;
+  totalYes: string; // in Wei format
+  totalNo: string; // in Wei format
+  totalPriceToken: string; // in Wei format
+  creator: string;
+  marketId: string;
+  liquidityInitialized: boolean;
+  claimers: string[];
+  createdAt: string; // timestamp in seconds
+  updatedAt: string; // timestamp in seconds
+}
 
 interface MarketPreviewProps {
   market: Market;
 }
 
 export default function MarketPreview({ market }: MarketPreviewProps) {
-  const timeLeft = market.endTime - Date.now();
+  // Convert endTime from seconds to milliseconds
+  const endTimeMs = Number(market.endTime) * 1000;
+  const timeLeft = endTimeMs - Date.now();
   const isEnded = timeLeft <= 0;
 
-  // Calculate YES probability based on LMSR
-  const yesPercentage = Math.round(
-    (market.totalYes / market.totalStaked) * 100
-  );
+  // Calculate totalStaked as the sum of totalYes and totalNo
+  const totalYesNum = Number(ethToNumber(market.totalYes));
+  const totalNoNum = Number(ethToNumber(market.totalNo));
+  const totalStaked = totalYesNum + totalNoNum;
+
+  // Calculate YES probability
+  const yesPercentage =
+    totalStaked > 0 ? Math.round((totalYesNum / totalStaked) * 100) : 50; // Default to 50% if no stakes
 
   // Format time left
   const formatTimeLeft = () => {
@@ -34,25 +56,13 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
 
   return (
     <Link href={`/markets/${market.id}`}>
-      <div className="p-6 bg-gray-800 rounded-lg pixelated-border hover:bg-gray-700 transition-colors ">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center">
-            <div
-              className={`w-6 h-6 ${getChainColor(
-                market.chain
-              )} flex items-center justify-center font-pixel text-black text-base mr-2`}
-            >
-              {market.chain?.substring(0, 1)}
-            </div>
-            <span className="inline-block px-2 py-1 bg-gray-700 text-green-400 text-base font-mono rounded">
-              {market.category}
-            </span>
-          </div>
-
-          <div className="flex items-center text-xs font-mono">
+      <div className="p-6 bg-gray-800 rounded-lg pixelated-border hover:bg-gray-700 transition-colors">
+        <div className="flex justify-between mb-4">
+          <h3 className="text-lg font-pixel mb-4">{market.question}</h3>
+          <div className="flex items-center text-3xl font-mono">
             {market.resolved ? (
               <span className="flex items-center">
-                {market.won ? (
+                {market.result ? (
                   <Check className="w-4 h-4 mr-1 text-green-400" />
                 ) : (
                   <X className="w-4 h-4 mr-1 text-red-400" />
@@ -68,8 +78,6 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
           </div>
         </div>
 
-        <h3 className="text-lg font-pixel mb-4">{market.question}</h3>
-
         <div className="mb-4">
           <div className="flex justify-between text-xs font-mono mb-1">
             <span>YES {yesPercentage}%</span>
@@ -84,12 +92,19 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
         </div>
 
         <div className="flex justify-between text-sm font-mono">
-          <span>Total Staked: {formatNumber(market.totalStaked)}</span>
-          <span>Liquidity: {formatNumber(market.totalPriceToken)}</span>
+          <span>Total Staked: {formatNumber(totalStaked)}</span>
+          <span>
+            Liquidity: {formatNumber(ethToNumber(market.totalPriceToken))}
+          </span>
         </div>
       </div>
     </Link>
   );
+}
+
+// Convert Wei to ETH (or just to a more usable number format)
+function ethToNumber(weiValue: string): number {
+  return parseInt(weiValue) / 1e18;
 }
 
 function formatNumber(num: number): string {
@@ -98,23 +113,6 @@ function formatNumber(num: number): string {
   } else if (num >= 1000) {
     return `${(num / 1000).toFixed(1)}K`;
   } else {
-    return num.toString();
-  }
-}
-
-function getChainColor(chain?: string): string {
-  switch (chain) {
-    case "ETH":
-      return "bg-blue-400";
-    case "BTC":
-      return "bg-orange-400";
-    case "SOL":
-      return "bg-purple-400";
-    case "AVAX":
-      return "bg-red-400";
-    case "MATIC":
-      return "bg-indigo-400";
-    default:
-      return "bg-gray-400";
+    return num.toFixed(2);
   }
 }
