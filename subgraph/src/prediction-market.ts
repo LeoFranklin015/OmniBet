@@ -84,6 +84,7 @@ export function handleMarketUpdated(event: MarketUpdatedEvent): void {
   } else {
     entity.totalNo = entity.totalNo.plus(event.params.amount);
   }
+  entity.totalPriceToken = entity.totalPriceToken.plus(event.params.cost);
   entity.updatedAt = event.block.timestamp;
   entity.save();
 }
@@ -122,6 +123,7 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
     } else {
       entity.totalNo = entity.totalNo.plus(event.params.amount);
     }
+    entity.totalPriceToken = entity.totalPriceToken.plus(event.params.cost);
   }
   entity.updatedAt = event.block.timestamp;
   entity.save();
