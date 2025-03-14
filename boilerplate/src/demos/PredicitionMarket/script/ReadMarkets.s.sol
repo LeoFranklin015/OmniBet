@@ -9,10 +9,17 @@ import {UD60x18} from "lib/prb-math/src/UD60x18.sol";
 contract ReadMarketsScript is Script {
     function run() public {
         // Replace with your deployed contract address
-        address contractAddress = address(0x0dcD53b908113a04Ac887ca7BC88f3D4271e1A68); // TODO: Update with actual address
+        address contractAddress = address(0x48A053465A0E439aadb61949cfFC417E1E272b84); // TODO: Update with actual address
         // Create an instance of the contract
         PredictionMarketSepolia market = PredictionMarketSepolia(payable(contractAddress));
+
+        // MockUSDC mockUSDC = MockUSDC(0x533b950875527eCD9B7630272ffc2a6998417404);
+        // mockUSDC.mint(address(this), 100000000000000000000);
+        // mockUSDC.approve(address(market), type(uint256).max);
         
+        vm.startBroadcast();
+        market.buy(6, true, ud(1000000000000000000));
+        vm.stopBroadcast();
         // Get all market IDs
         uint256[] memory marketIds = market.getMarketIds();
         console.log("Total markets found:", marketIds.length);
@@ -43,6 +50,9 @@ contract ReadMarketsScript is Script {
             //         console.log("Could not calculate NO token cost");
             //     }
             // }
+
+            
         }
+    
     }
 }

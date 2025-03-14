@@ -20,7 +20,8 @@ contract DeployPredictionMarketSepolia is Script {
         // Deploy PredictionMarketSepolia with MockUSDC as price token
         PredictionMarketSepolia predictionMarket = new PredictionMarketSepolia{value: 0.05 ether}(
             callbackProxyAddr,
-            address(mockUSDC)
+            address(mockUSDC),
+            address(0x4b4b30e2E7c6463b03CdFFD6c42329D357205334)
         );
         console.log("PredictionMarketSepolia deployed to:", address(predictionMarket));
         console.log("Using price token at:", address(mockUSDC));

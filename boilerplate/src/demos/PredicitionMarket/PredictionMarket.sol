@@ -7,7 +7,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
 import "./LMSRLibrary.sol";
-contract PredictionMarket is Ownable, ReentrancyGuard {
+import '../../../lib/reactive-lib/src/abstract-base/AbstractCallback.sol';
+contract PredictionMarket is Ownable, ReentrancyGuard , AbstractCallback{
     using SafeERC20 for IERC20;
 
     IERC20 public priceToken;
@@ -80,9 +81,18 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         address creator
     );
 
+    event MarketUpdated(
+        uint256 indexed marketId,
+        bool isYesToken,
+        uint256 amount,
+        address account,
+        uint256 cost
+    );
+
     constructor(
+        address _callback_sender, // callback sender address from reactive ( sepolia )
         address _priceToken
-    ) Ownable(msg.sender) {
+    ) Ownable(msg.sender) AbstractCallback(_callback_sender) payable {
         require(_priceToken != address(0), "Invalid price token");
         
         DECIMALS = ud(1e18);
@@ -335,7 +345,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         return marketCount;
     }
 
-    function updateMarket(uint256 marketId , bool isYesToken , UD60x18 amount , address account) public {
+    function updateMarket(address , uint256 marketId , bool isYesToken , UD60x18 amount , address account , uint256 cost) external authorizedSenderOnly {
         if (isYesToken) {
             markets[marketId].qYes = markets[marketId].qYes.add(amount);
             yesBalances[marketId][account] += amount.unwrap();
@@ -345,6 +355,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
             noBalances[marketId][account] += amount.unwrap();
             markets[marketId].totalNo += amount.unwrap();
         }
+        markets[marketId].totalPriceToken += cost;
+        emit MarketUpdated(marketId, isYesToken, amount.unwrap(), account, cost);
     }
 
 

@@ -13,7 +13,7 @@ contract CreateMarket is Script {
                                                   address(0x2A2692165299C0469894E1e6Bf62d35ea347EA3e));
         
         // Create a reference to the PredictionMarket contract
-        PredictionMarket market = PredictionMarket(predictionMarketAddress);
+        PredictionMarket market = PredictionMarket(payable(predictionMarketAddress));
         
         // Set up market parameters
         string memory question = vm.envOr("MARKET_QUESTION", 
@@ -30,7 +30,9 @@ contract CreateMarket is Script {
         vm.startBroadcast();
         
         uint256 marketId = market.createMarket(question, endTime);
-        
+
+        market.buy(marketId, true, ud(1000000000000000000));
+        market.buy(marketId, false, ud(1000000000000000000));
         vm.stopBroadcast();
         
         console.log("Market created successfully!");

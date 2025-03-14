@@ -21,7 +21,7 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
 
     uint256 public MARKET_RESOLVED = 0x6d4d544f5a6dcf38d77a232d3ef7358625c74877a1ad954fcb507872e7a05eaf;
 
-    uint256 public TOKEN_BROUGHT_SUB = 0x9dd58bb3282ab71fe9a69508e44603182bfdc6797cff2448810a01ad3a456402;
+    uint256 public TOKEN_BROUGHT_SUB = 0x9f81db15e86fd9b33c78e9a6f0e018f2f25aadac7ee976e404300b175772e833;
 
     event MarketCreated(uint256 marketId);
 
@@ -101,7 +101,8 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
                 if(opType == 1) {
                     if(tokenType == 1) {
                         bytes memory payload = abi.encodeWithSignature(
-                            "updateMarket(uint256,bool,uint256)",
+                            "updateMarket(address,uint256,bool,uint256)",
+                            address(0),
                             marketId,
                             true,
                             amount
@@ -111,7 +112,8 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
 
                     else if(tokenType ==2){
                         bytes memory payload = abi.encodeWithSignature(
-                            "updateMarket(uint256,bool,uint256)",
+                            "updateMarket(address,uint256,bool,uint256)",
+                            address(0),
                             marketId,
                             false,
                             amount

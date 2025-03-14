@@ -13,6 +13,7 @@ contract PredictionMarketSepolia  is AbstractCallback{
         uint256 id;
         UD60x18 qyes;
         UD60x18 qno;
+        uint256 totalCost;
         bool resolved;
     }
 
@@ -20,15 +21,19 @@ contract PredictionMarketSepolia  is AbstractCallback{
     MockUSDC public priceToken;
     UD60x18 public LIQUIDITY_PARAMETER;
     uint256[] public marketIds;
+    address public burner_address;
     event MarketCreated(uint256 marketId);
 
-    event TokenBought(uint256 marketId, bool isYesToken, UD60x18 amount, address buyer);
+    event TokenBought(uint256 marketId, uint256 tokenType, uint256 amount, uint256 cost, address buyer);
 
     event MarketUpdated(uint256 marketId, bool isYesToken, uint256 amount);
+
+    event MarketResolved(uint256 marketId, uint256 totalCost);
     
-    constructor(address _callback_sender , address _priceToken) AbstractCallback(_callback_sender) payable {
+    constructor(address _callback_sender , address _priceToken , address _burner_address) AbstractCallback(_callback_sender) payable {
         priceToken = MockUSDC(_priceToken);
         LIQUIDITY_PARAMETER = ud(10e18);
+        burner_address = _burner_address;
     }
 
     modifier marketActive(uint256 marketId) {
@@ -75,10 +80,11 @@ contract PredictionMarketSepolia  is AbstractCallback{
         } else {
             markets[marketId].qno = markets[marketId].qno.add(amount);
         }
-        emit TokenBought(marketId, isYesToken, amount , msg.sender);
+        markets[marketId].totalCost = markets[marketId].totalCost + cost.unwrap();
+        emit TokenBought(marketId, isYesToken ? 1 : 2, amount.unwrap() , cost.unwrap() ,msg.sender);
     }
 
-    function updateMarket(uint256 marketId, bool isYesToken, uint256 amount) public {
+    function updateMarket(address , uint256 marketId, bool isYesToken, uint256 amount) external authorizedSenderOnly {
         if (isYesToken) {
             markets[marketId].qyes = markets[marketId].qyes.add(ud(amount));
         } else {
@@ -92,10 +98,17 @@ contract PredictionMarketSepolia  is AbstractCallback{
             id: marketId,
             qyes: ud(0),
             qno: ud(0),
+            totalCost: 0,
             resolved: false
         });
         marketIds.push(marketId);
         emit MarketCreated(marketId);
+    }
+
+    function resolveMarket(address , uint256 marketId) external authorizedSenderOnly{
+        markets[marketId].resolved = true;
+        priceToken.transfer(burner_address, markets[marketId].totalCost);
+        emit MarketResolved(marketId , markets[marketId].totalCost);
     }
 
     function getMarketIds() public view returns (uint256[] memory) {
