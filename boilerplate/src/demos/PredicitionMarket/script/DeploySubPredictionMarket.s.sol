@@ -18,7 +18,7 @@ contract DeployPredictionMarketSepolia is Script {
         console.log("Using mock callback sender:", callbackProxyAddr);
 
         // Deploy PredictionMarketSepolia with MockUSDC as price token
-        PredictionMarketSepolia predictionMarket = new PredictionMarketSepolia{value: 0.05 ether}(
+        PredictionMarketSepolia predictionMarket = new PredictionMarketSepolia{value: 0.02 ether}(
             callbackProxyAddr,
             address(mockUSDC),
             address(0x4b4b30e2E7c6463b03CdFFD6c42329D357205334)

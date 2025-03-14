@@ -10,7 +10,7 @@ contract CreateMarket is Script {
         // Load the PredictionMarket contract address from environment variable
         // or use a hardcoded address if preferred
         address predictionMarketAddress = vm.envOr("PREDICTION_MARKET_ADDRESS", 
-                                                  address(0x2A2692165299C0469894E1e6Bf62d35ea347EA3e));
+                                                  address(0x9AA0AC61A31F46d36ad7C28F8FECA68CE5D09798));
         
         // Create a reference to the PredictionMarket contract
         PredictionMarket market = PredictionMarket(payable(predictionMarketAddress));

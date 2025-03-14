@@ -345,7 +345,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard , AbstractCallback{
         return marketCount;
     }
 
-    function updateMarket(address , uint256 marketId , bool isYesToken , UD60x18 amount , address account , uint256 cost) external authorizedSenderOnly {
+    function updateMarket(address , uint256 marketId , bool isYesToken , uint256 _amount , address account , uint256 cost) external authorizedSenderOnly {
+        UD60x18 amount = ud(_amount);
         if (isYesToken) {
             markets[marketId].qYes = markets[marketId].qYes.add(amount);
             yesBalances[marketId][account] += amount.unwrap();

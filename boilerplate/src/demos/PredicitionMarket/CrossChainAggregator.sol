@@ -21,7 +21,7 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
 
     uint256 public MARKET_RESOLVED = 0x6d4d544f5a6dcf38d77a232d3ef7358625c74877a1ad954fcb507872e7a05eaf;
 
-    uint256 public TOKEN_BROUGHT_SUB = 0x9f81db15e86fd9b33c78e9a6f0e018f2f25aadac7ee976e404300b175772e833;
+    uint256 public TOKEN_BROUGHT_SUB = 0x318c6e83dc99fba0aa3da9d2b1e26eab8c47b20821e88297b66fb7cb8a05189b;
 
     event MarketCreated(uint256 marketId);
 
@@ -130,43 +130,33 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
             // TODO: Handle the MarketCreated event
             if (log.topic_0 == TOKEN_BROUGHT_SUB) {
                 // TODO: Handle the TokenBroughtSub event
-                // (uint256 marketId, bool isYesToken, uint256 amount, address _buyer) = abi.decode(log.data, (uint256, bool, uint256, address));
-                // address buyer = address(uint160(_buyer));
-                // if(isYesToken) {
-                //     bytes memory payload = abi.encodeWithSignature(
-                //         "buyYesToken(uint256,uint256,address)",
-                //         marketId,
-                //         amount,
-                //         buyer
-                //     );
-                //     emit Callback(originChainId, MainPredictionMarket, GAS_LIMIT, payload);
-                // }
+                (uint256 marketId, uint256 tokenType, uint256 amount, uint256 cost, address _buyer) = abi.decode(log.data, (uint256, uint256, uint256, uint256, address));
+                address buyer = address(uint160(_buyer));
+                if(tokenType == 1) {
+                    bytes memory payload = abi.encodeWithSignature(
+                        "updateMarket(address,uint256,bool,uint256,address,uint256)",
+                        address(0),
+                        marketId,
+                        true,
+                        amount,
+                        buyer,
+                        cost
+                    );
+                    emit Callback(originChainId, MainPredictionMarket, GAS_LIMIT, payload);
+                }
+                else if(tokenType == 2) {
+                    bytes memory payload = abi.encodeWithSignature(
+                        "updateMarket(address,uint256,bool,uint256,address,uint256)",
+                        address(0),
+                        marketId,
+                        true,
+                        amount,
+                        buyer,
+                        cost
+                    );
+                    emit Callback(originChainId, MainPredictionMarket, GAS_LIMIT, payload);
+                }
             }
         }
-
-
-        // Parse the MarketCreated event data
-        // For MarketCreated(uint256 indexed marketId, string question, uint256 endTime, address creator)
-        
-
-
-
-
-        // The indexed marketId will be in log.topic_1
-        // uint256 marketId  = uint256(log.topic_1);
-        
-        // // Decode the non-indexed parameters (question, endTime, creator) from log.data
-        // (string memory question, uint256 endTime, address creator) = abi.decode(log.data, (string, uint256, address));
-        
-        // // Prepare the callback payload with all relevant market information
-        // bytes memory payload = abi.encodeWithSignature(
-        //     "callback(address,uint256,string,uint256,address)",
-        //     address(0),
-        //     marketId,
-        //     question, 
-        //     endTime,
-        //     creator
-        // );
-    
     }
 }
