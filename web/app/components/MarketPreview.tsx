@@ -31,11 +31,30 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
   // Calculate totalStaked as the sum of totalYes and totalNo
   const totalYesNum = Number(ethToNumber(market.totalYes));
   const totalNoNum = Number(ethToNumber(market.totalNo));
-  const totalStaked = totalYesNum + totalNoNum;
+  const totalStaked = Number(ethToNumber(market.totalPriceToken));
 
   // Calculate YES probability
   const yesPercentage =
-    totalStaked > 0 ? Math.round((totalYesNum / totalStaked) * 100) : 50; // Default to 50% if no stakes
+    totalYesNum + totalNoNum > 0
+      ? Math.round((totalYesNum / (totalYesNum + totalNoNum)) * 100)
+      : 50; // Default to 50% if no stakes
+
+  // Using LMSR to calculate cost of buying 1 token
+  const liquidityParameter = 1000; // As specified
+  const costToAddOneYes = getLMSRCost(
+    totalYesNum,
+    totalNoNum,
+    true,
+    1,
+    liquidityParameter
+  );
+  const costToAddOneNo = getLMSRCost(
+    totalYesNum,
+    totalNoNum,
+    false,
+    1,
+    liquidityParameter
+  );
 
   // Format time left
   const formatTimeLeft = () => {
@@ -79,7 +98,7 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
         </div>
 
         <div className="mb-4">
-          <div className="flex justify-between text-xs font-mono mb-1">
+          <div className="flex justify-between text-3xl font-mono mb-1">
             <span>YES {yesPercentage}%</span>
             <span>NO {100 - yesPercentage}%</span>
           </div>
@@ -91,15 +110,68 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
           </div>
         </div>
 
-        <div className="flex justify-between text-sm font-mono">
-          <span>Total Staked: {formatNumber(totalStaked)}</span>
-          <span>
-            Liquidity: {formatNumber(ethToNumber(market.totalPriceToken))}
-          </span>
+        <div className="flex justify-between text-xl font-mono mb-2">
+          <span>Total Staked: {formatNumber(totalStaked)} USDC</span>
+        </div>
+
+        {/* LMSR Cost Display */}
+        <div className="mt-2 p-2 rounded">
+          <div className="text-md font-mono text-center mb-1">
+            Current Token Prices:
+          </div>
+          <div className="flex justify-between text-xl font-mono">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-400 rounded-full mr-1"></div>
+              <span>YES: {formatNumber(costToAddOneYes)} USDC</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-red-400 rounded-full mr-1"></div>
+              <span>NO: {formatNumber(costToAddOneNo)} USDC</span>
+            </div>
+          </div>
         </div>
       </div>
     </Link>
   );
+}
+
+// LMSR Cost calculation function (JavaScript implementation of the Solidity contract)
+function getLMSRCost(
+  qYes: number,
+  qNo: number,
+  isYesToken: boolean,
+  amount: number,
+  liquidityParameter: number
+): number {
+  if (amount <= 0) return 0;
+
+  // Current total cost
+  const totalCost =
+    liquidityParameter *
+    Math.log(
+      Math.exp(qYes / liquidityParameter) + Math.exp(qNo / liquidityParameter)
+    );
+
+  // New cost after adding the tokens
+  let newCost;
+  if (isYesToken) {
+    newCost =
+      liquidityParameter *
+      Math.log(
+        Math.exp((qYes + amount) / liquidityParameter) +
+          Math.exp(qNo / liquidityParameter)
+      );
+  } else {
+    newCost =
+      liquidityParameter *
+      Math.log(
+        Math.exp(qYes / liquidityParameter) +
+          Math.exp((qNo + amount) / liquidityParameter)
+      );
+  }
+
+  // Price is the difference between new and current costs
+  return newCost - totalCost;
 }
 
 // Convert Wei to ETH (or just to a more usable number format)
@@ -113,6 +185,6 @@ function formatNumber(num: number): string {
   } else if (num >= 1000) {
     return `${(num / 1000).toFixed(1)}K`;
   } else {
-    return num.toFixed(2);
+    return num.toFixed(5);
   }
 }

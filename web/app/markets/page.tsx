@@ -1,30 +1,39 @@
-import { markets } from "../data/markets";
+"use client";
+import { useEffect, useState } from "react";
 import MarketPreview from "../components/MarketPreview";
+import { Market } from "../components/MarketPreview";
+import { fetchMarkets } from "@/lib/fetchMarkets";
+import { Loader2 } from "lucide-react";
 
 export default function MarketsPage() {
-  // Group markets by category
-  const categories = Array.from(
-    new Set(markets.map((market) => market.category ?? ""))
-  );
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMarket = async () => {
+      const markets = await fetchMarkets();
+      setMarkets(markets as Market[]);
+      setLoading(false);
+    };
+    fetchMarket();
+  }, []);
 
   return (
     <div>
       <h1 className="text-3xl font-pixel mb-6">Prediction Markets</h1>
-
-      <div className="mt-8 space-y-12">
-        {categories.map((category) => (
-          <section key={category} className="mb-8">
-            <h2 className="text-xl font-pixel mb-4">{category}</h2>
-            <div className="grid gap-6">
-              {markets
-                .filter((market) => market.category === category)
-                .map((market) => (
-                  <MarketPreview key={market.id} market={market} />
-                ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="w-40 h-40 animate-spin" />
+        </div>
+      ) : (
+        <div className="mt-8 space-y-12">
+          <div className="grid gap-6">
+            {markets.map((market) => (
+              <MarketPreview key={market.id} market={market} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
