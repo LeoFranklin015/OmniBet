@@ -1,84 +1,16 @@
-type EmergencyLiquidityAdded @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  marketId: BigInt! # uint256
-  amount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type LiquidityAdded @entity(immutable: true) {
-  id: Bytes!
-  provider: Bytes! # address
-  marketId: BigInt! # uint256
-  amount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type MarketCreated @entity(immutable: true) {
-  id: Bytes!
+type Market @entity {
+  id: ID!
   marketId: BigInt! # uint256
   question: String! # string
   endTime: BigInt! # uint256
   creator: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type MarketResolved @entity(immutable: true) {
-  id: Bytes!
-  marketId: BigInt! # uint256
-  result: Boolean! # bool
+  totalYes: BigInt! # uint256
+  totalNo: BigInt! # uint256
+  resolved: Boolean! # bool
+  result: Boolean # bool - whether YES won (null if not resolved)
   totalPriceToken: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type MarketUpdated @entity(immutable: true) {
-  id: Bytes!
-  marketId: BigInt! # uint256
-  isYesToken: Boolean! # bool
-  amount: BigInt! # uint256
-  account: Bytes! # address
-  cost: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type RewardClaimed @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  marketId: BigInt! # uint256
-  rewardAmount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TokenOperation @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  marketId: BigInt! # uint256
-  opType: Int! # uint8
-  tokenType: Int! # uint8
-  amount: BigInt! # uint256
-  cost: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  liquidityInitialized: Boolean! # bool
+  createdAt: BigInt! # timestamp
+  updatedAt: BigInt! # timestamp
+  claimers: [Bytes!]! # address[]
 }
