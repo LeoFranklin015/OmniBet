@@ -19,11 +19,12 @@ contract PredictionMarketSepolia  is AbstractCallback{
     mapping(uint256 => Market) public markets;
     MockUSDC public priceToken;
     UD60x18 public LIQUIDITY_PARAMETER;
-
+    uint256[] public marketIds;
     event MarketCreated(uint256 marketId);
 
     event TokenBought(uint256 marketId, bool isYesToken, UD60x18 amount, address buyer);
-    
+
+    event MarketUpdated(uint256 marketId, bool isYesToken, uint256 amount);
     
     constructor(address _callback_sender , address _priceToken) AbstractCallback(_callback_sender) payable {
         priceToken = MockUSDC(_priceToken);
@@ -77,22 +78,31 @@ contract PredictionMarketSepolia  is AbstractCallback{
         emit TokenBought(marketId, isYesToken, amount , msg.sender);
     }
 
-    function updateMarket(uint256 marketId, bool isYesToken, UD60x18 amount) public {
+    function updateMarket(uint256 marketId, bool isYesToken, uint256 amount) public {
         if (isYesToken) {
-            markets[marketId].qyes = markets[marketId].qyes.add(amount);
+            markets[marketId].qyes = markets[marketId].qyes.add(ud(amount));
         } else {
-            markets[marketId].qno = markets[marketId].qno.add(amount);
+            markets[marketId].qno = markets[marketId].qno.add(ud(amount));
         }
+        emit MarketUpdated(marketId, isYesToken, amount);
     }
 
-    function createMarket(uint256 marketId) public {
+    function createMarket(address , uint256 marketId) external authorizedSenderOnly  {
         markets[marketId] = Market({
             id: marketId,
             qyes: ud(0),
             qno: ud(0),
             resolved: false
         });
+        marketIds.push(marketId);
+        emit MarketCreated(marketId);
     }
 
+    function getMarketIds() public view returns (uint256[] memory) {
+        return marketIds;
+    }
 
+    function getMarket(uint256 marketId) public view returns (Market memory) {
+        return markets[marketId];
+    }
 }
