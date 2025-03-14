@@ -11,7 +11,7 @@ import "./Tokens/NoToken.sol";
 import "./Tokens/YesToken.sol";
 import "./LMSRLibrary.sol";
 
-contract PredictionMarket is Ownable, IERC1155Receiver, ReentrancyGuard {
+contract PredictionMarket2 is Ownable, IERC1155Receiver, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public priceToken;

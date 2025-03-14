@@ -16,7 +16,7 @@ contract DeployPredictionMarket is Script {
                 address callbackProxyAddr = address(0xc9f36411C9897e7F959D99ffca2a0Ba7ee0D7bDA);
 
         // Deploy PredictionMarket with MockUSDC as price token
-        PredictionMarket predictionMarket = new PredictionMarket{value: 0.05 ether}(callbackProxyAddr ,address(mockUSDC));
+        PredictionMarketV2 predictionMarket = new PredictionMarketV2{value: 0.05 ether}(callbackProxyAddr ,address(mockUSDC));
         console.log("PredictionMarket deployed to:", address(predictionMarket));
         console.log("Using price token at:", address(mockUSDC));
 

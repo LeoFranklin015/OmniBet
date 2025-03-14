@@ -9,14 +9,14 @@ import "../PredictionMarket.sol";
 
 
 contract DeployTokens is Script {
-    function run() external returns (YesToken, NoToken, MockUSDC, PredictionMarket) {
+    function run() external returns (YesToken, NoToken, MockUSDC, PredictionMarket2) {
         vm.startBroadcast();
 
         // Deploy tokens with the deployer as the initial owner
         YesToken yesToken = new YesToken(msg.sender);
         NoToken noToken = new NoToken(msg.sender);
         MockUSDC mockUSDC = new MockUSDC("Mock USDC", "mUSDC");
-        PredictionMarket predictionMarket = new PredictionMarket(address(mockUSDC), address(yesToken), address(noToken));
+        PredictionMarket2 predictionMarket = new PredictionMarket2(address(mockUSDC), address(yesToken), address(noToken));
 
 
         yesToken.setPredictionMarket(address(predictionMarket));

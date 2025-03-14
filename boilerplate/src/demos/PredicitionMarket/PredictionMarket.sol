@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
 import "./LMSRLibrary.sol";
 import '../../../lib/reactive-lib/src/abstract-base/AbstractCallback.sol';
-contract PredictionMarket is Ownable, ReentrancyGuard , AbstractCallback{
+contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
     using SafeERC20 for IERC20;
 
     IERC20 public priceToken;

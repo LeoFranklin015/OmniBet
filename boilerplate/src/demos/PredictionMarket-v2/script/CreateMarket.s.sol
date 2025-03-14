@@ -13,7 +13,7 @@ contract CreateMarket is Script {
                                                   address(0xB8b6192E296A97b1CD5E065a9A66f82f148272AE));
         
         // Create a reference to the PredictionMarket contract
-        PredictionMarket market = PredictionMarket(predictionMarketAddress);
+        PredictionMarket2 market = PredictionMarket2(predictionMarketAddress);
         
         // Set up market parameters
         string memory question = vm.envOr("MARKET_QUESTION", 

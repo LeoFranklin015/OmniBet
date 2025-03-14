@@ -1,0 +1,47 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: PredictionMarket
+    network: sepolia
+    source:
+      address: "0x9AA0AC61A31F46d36ad7C28F8FECA68CE5D09798"
+      abi: PredictionMarket
+      startBlock: 7900190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - EmergencyLiquidityAdded
+        - LiquidityAdded
+        - MarketCreated
+        - MarketResolved
+        - MarketUpdated
+        - OwnershipTransferred
+        - RewardClaimed
+        - TokenOperation
+      abis:
+        - name: PredictionMarket
+          file: ./abis/PredictionMarket.json
+      eventHandlers:
+        - event: EmergencyLiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleEmergencyLiquidityAdded
+        - event: LiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleLiquidityAdded
+        - event: MarketCreated(indexed uint256,string,uint256,address)
+          handler: handleMarketCreated
+        - event: MarketResolved(indexed uint256,bool,uint256)
+          handler: handleMarketResolved
+        - event: MarketUpdated(indexed uint256,bool,uint256,address,uint256)
+          handler: handleMarketUpdated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleRewardClaimed
+        - event: TokenOperation(indexed address,indexed uint256,uint8,uint8,uint256,uint256)
+          handler: handleTokenOperation
+      file: ./src/prediction-market.ts
