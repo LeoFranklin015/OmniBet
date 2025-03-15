@@ -1,4 +1,5 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import USDCBalance from "./USDCBalance";
 export const CustomConnectButton = () => {
   return (
     <ConnectButton.Custom>
@@ -55,6 +56,7 @@ export const CustomConnectButton = () => {
               }
               return (
                 <div className="flex items-center gap-10">
+                  <USDCBalance />
                   <button
                     onClick={openChainModal}
                     style={{ display: "flex", alignItems: "center" }}

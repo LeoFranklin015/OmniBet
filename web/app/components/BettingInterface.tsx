@@ -97,7 +97,7 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
               placeholder="0.00"
               value={amount}
               onChange={handleAmountChange}
-              className="font-mono text-lg"
+              className="text-xl p-2"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
       <TabsContent value="no">
         <div className="space-y-4">
           <div>
-            <label className="block font-mono text-sm mb-1">
+            <label className="block font-mono text-lg mb-1">
               Amount to Bet
             </label>
             <Input
@@ -135,12 +135,12 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
               placeholder="0.00"
               value={amount}
               onChange={handleAmountChange}
-              className="font-mono"
+              className="text-xl p-2"
             />
           </div>
 
           <div className="bg-gray-700 p-3 rounded-lg">
-            <div className="flex justify-between font-mono text-sm mb-1">
+            <div className="flex justify-between font-mono text-lg mb-1">
               <span>Current Odds</span>
               <span>
                 {Math.round((totalNoNum / (totalYesNum + totalNoNum)) * 100)}%
@@ -211,6 +211,11 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
                         {chainData[key as keyof typeof chainData].name} Network
                       </span>
                     </div>
+                  </div>
+                  <div className="bg-gray-700 p-3 rounded-lg mb-4">
+                    <button className="w-full font-pixel pixelated-border">
+                      Mint USDC
+                    </button>
                   </div>
                   <BettingForm />
                 </TabsContent>
