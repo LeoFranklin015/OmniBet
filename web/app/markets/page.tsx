@@ -12,6 +12,9 @@ export default function MarketsPage() {
   useEffect(() => {
     const fetchMarket = async () => {
       const markets = await fetchMarkets();
+      markets.sort((a: Market, b: Market) =>
+        a.createdAt < b.createdAt ? 1 : -1
+      );
       setMarkets(markets as Market[]);
       setLoading(false);
     };

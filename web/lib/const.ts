@@ -2,14 +2,14 @@ export const GRAPH_URL =
   "https://api.studio.thegraph.com/query/73364/omnibet/version/latest";
 
 export const USDC_ADDRESS_SEPOLIA_A =
-  "0x408709d933DA1337f1027d13fCF6e081a47FE71a";
+  "0x1e0a64f445B7Cb80D3Ad85d6F893e037dD7DAD09";
 export const USDC_ADDRESS_SEPOLIA_B =
-  "0x35ACAEBeA3c9EDcc8B0C8aB9e33066C332d29b72";
+  "0x83606f12aC1a708cb9D4Ad92a1203d1c9Da06424";
 
 export const PredictionMarketAddressSepoliaA =
-  "0x0E2119Ccd170485543A77FD4fEc06D0668A350a1";
+  "0x0ffcAb38F5Fd76F1Eec27a46eD37D184Ed9B0931";
 export const PredictionMarketAddressSepoliaB =
-  "0x1033e19794D5f63672Aa1Cb1d1B243F2F3400E94";
+  "0x8d34bb6217344AC5F1Af114ecec9fa6f4038B5c2";
 
 export const PredictionMarketAddressSepoliaA_ABI = [
   {

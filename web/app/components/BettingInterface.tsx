@@ -34,7 +34,9 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   // Separate states for YES and NO amounts
   const [yesAmount, setYesAmount] = useState("");
   const [noAmount, setNoAmount] = useState("");
-  const [estimatedReturn, setEstimatedReturn] = useState("0");
+  const [yesEstimatedReturn, setYesEstimatedReturn] = useState("0");
+  const [noEstimatedReturn, setNoEstimatedReturn] = useState("0");
+  const [activeTab, setActiveTab] = useState("yes");
   const [selectedChain, setSelectedChain] = useState("chainA");
   const [marketAddress, setMarketAddress] = useState(
     PredictionMarketAddressSepoliaA
@@ -65,34 +67,41 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
     },
   };
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
+  // Handlers for YES and NO inputs
+  const handleYesAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const isYesTab = e.target.name === "yes-amount";
 
     // Only update if the value is a valid number or empty
     if (value === "" || !isNaN(Number(value))) {
-      if (isYesTab) {
-        setYesAmount(value);
-      } else {
-        setNoAmount(value);
-      }
+      setYesAmount(value);
 
       // Calculate estimated return only if there's a valid number
       if (value && !isNaN(Number(value))) {
         const inputAmount = Number(value);
         const yesPercentage = totalYesNum / (totalYesNum + totalNoNum);
-
-        let estimatedReturnValue;
-        if (isYesTab) {
-          estimatedReturnValue = inputAmount / yesPercentage;
-        } else {
-          estimatedReturnValue = inputAmount / (1 - yesPercentage);
-        }
-
-        setEstimatedReturn(estimatedReturnValue.toFixed(2));
+        const estimatedReturnValue = inputAmount / yesPercentage;
+        setYesEstimatedReturn(estimatedReturnValue.toFixed(2));
       } else {
-        setEstimatedReturn("0");
+        setYesEstimatedReturn("0");
+      }
+    }
+  };
+
+  const handleNoAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Only update if the value is a valid number or empty
+    if (value === "" || !isNaN(Number(value))) {
+      setNoAmount(value);
+
+      // Calculate estimated return only if there's a valid number
+      if (value && !isNaN(Number(value))) {
+        const inputAmount = Number(value);
+        const yesPercentage = totalYesNum / (totalYesNum + totalNoNum);
+        const estimatedReturnValue = inputAmount / (1 - yesPercentage);
+        setNoEstimatedReturn(estimatedReturnValue.toFixed(2));
+      } else {
+        setNoEstimatedReturn("0");
       }
     }
   };
@@ -135,7 +144,7 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   };
 
   const BettingForm = () => (
-    <Tabs defaultValue="yes">
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid grid-cols-2 mb-4 p-1 bg-gray-700 rounded-lg">
         <TabsTrigger
           value="yes"
@@ -160,17 +169,10 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
             <Input
               ref={yesInputRef}
               type="number"
-              name="yes-amount"
               placeholder="0.00"
               value={yesAmount}
-              onChange={handleAmountChange}
+              onChange={handleYesAmountChange}
               className="text-xl p-2"
-              onFocus={(e) => {
-                // Preserve cursor position on focus
-                const value = e.target.value;
-                e.target.value = "";
-                e.target.value = value;
-              }}
               step="any" // Allow decimal numbers
             />
           </div>
@@ -184,7 +186,7 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
             </div>
             <div className="flex justify-between font-mono text-sm">
               <span>Estimated Return</span>
-              <span>{estimatedReturn}</span>
+              <span>{yesEstimatedReturn}</span>
             </div>
           </div>
 
@@ -207,17 +209,10 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
             <Input
               ref={noInputRef}
               type="number"
-              name="no-amount"
               placeholder="0.00"
               value={noAmount}
-              onChange={handleAmountChange}
+              onChange={handleNoAmountChange}
               className="text-xl p-2"
-              onFocus={(e) => {
-                // Preserve cursor position on focus
-                const value = e.target.value;
-                e.target.value = "";
-                e.target.value = value;
-              }}
               step="any" // Allow decimal numbers
             />
           </div>
@@ -231,7 +226,7 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
             </div>
             <div className="flex justify-between font-mono text-sm">
               <span>Estimated Return</span>
-              <span>{estimatedReturn}</span>
+              <span>{noEstimatedReturn}</span>
             </div>
           </div>
 
@@ -251,7 +246,10 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
     <div className="bg-gray-800 rounded-lg pixelated-border p-6 sticky top-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-pixel mb-4">Place Your Bet</h3>
-        <USDCBalance usdcAddress={usdcAddress} address={address || ""} />
+
+        {!isDisabled && (
+          <USDCBalance usdcAddress={usdcAddress} address={address || ""} />
+        )}
       </div>
 
       {isDisabled ? (

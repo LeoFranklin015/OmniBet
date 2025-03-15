@@ -1,5 +1,6 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import USDCBalance from "./USDCBalance";
+import Link from "next/link";
 export const CustomConnectButton = () => {
   return (
     <ConnectButton.Custom>
@@ -56,6 +57,24 @@ export const CustomConnectButton = () => {
               }
               return (
                 <div className="flex items-center gap-10">
+                  <Link href="/markets/create">
+                    <button
+                      style={{ display: "flex", alignItems: "center" }}
+                      type="button"
+                      className="flex items-center gap-3 px-2 py-2  hover:text-black rounded pixelated-border hover:bg-yellow-500 transition-colors text-green-500"
+                    >
+                      Create Market
+                    </button>
+                  </Link>
+                  <Link href="/markets/mymarkets">
+                    <button
+                      style={{ display: "flex", alignItems: "center" }}
+                      type="button"
+                      className="flex items-center gap-3 px-2 py-2  hover:text-black rounded pixelated-border hover:bg-yellow-500 transition-colors text-green-500"
+                    >
+                      My Markets
+                    </button>
+                  </Link>
                   <button
                     onClick={openChainModal}
                     style={{ display: "flex", alignItems: "center" }}

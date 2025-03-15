@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Clock, Check, X, Award, ArrowRight } from "lucide-react";
+import { Clock, Check, X, Award, ArrowRight, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -16,6 +16,19 @@ import {
   PredictionMarketAddressSepoliaA_ABI,
 } from "@/lib/const";
 import { useAccount } from "wagmi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ethers } from "ethers";
 
 interface UserMarket {
   id: string;
@@ -34,6 +47,7 @@ interface UserMarket {
   totalNo: number;
   createdAt: Date;
   updatedAt: Date;
+  creator: string;
 }
 
 interface UserMarketCardProps {
@@ -42,6 +56,10 @@ interface UserMarketCardProps {
 
 export default function UserMarketCard({ market }: UserMarketCardProps) {
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [resolveResult, setResolveResult] = useState<boolean | null>(null);
+  const [proof, setProof] = useState("");
   const { address } = useAccount();
   const timeLeft = market.endTime.getTime() - Date.now();
   const isEnded = timeLeft <= 0;
@@ -82,13 +100,43 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
       address: PredictionMarketAddressSepoliaA,
       abi: PredictionMarketAddressSepoliaA_ABI,
       functionName: "claimReward",
-      args: [market.id],
+      args: [Number(market.id)],
       account: address as `0x${string}`,
     });
 
     await client.waitForTransactionReceipt({ hash: tx });
 
     setIsClaiming(false);
+  };
+
+  const handleResolve = async () => {
+    if (resolveResult === null) return;
+
+    setIsResolving(true);
+
+    try {
+      // Convert proof string to bytes32
+      // For ethers v6
+      const bytes32Proof = ethers.encodeBytes32String(proof);
+
+      // Alternative if the above doesn't work (for ethers v5)
+      // const bytes32Proof = ethers.utils.formatBytes32String(proof);
+
+      const tx = await walletClient.writeContract({
+        address: PredictionMarketAddressSepoliaA,
+        abi: PredictionMarketAddressSepoliaA_ABI,
+        functionName: "resolve",
+        args: [Number(market.id), resolveResult, bytes32Proof],
+        account: address as `0x${string}`,
+      });
+
+      await client.waitForTransactionReceipt({ hash: tx });
+      setShowResolveModal(false);
+    } catch (error) {
+      console.error("Error resolving market:", error);
+    } finally {
+      setIsResolving(false);
+    }
   };
 
   // Determine primary position (YES if more YES tokens, NO if more NO tokens)
@@ -160,7 +208,9 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
                 {market.resolved ? "Rewards" : "Potential Rewards"}
               </div>
               <div className="text-lg font-pixel">
-                {market.rewards > 0 ? market.rewards.toFixed(3) : "TBD"} ETH
+                {market.rewards > 0
+                  ? market.rewards.toFixed(3) + " USDC"
+                  : "TBD"}
               </div>
             </div>
           </div>
@@ -175,6 +225,125 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
           View Market <ArrowRight className="ml-1 w-3 h-3" />
         </Link>
 
+        {!market.resolved &&
+          market.creator.toLowerCase() === address?.toLowerCase() && (
+            <Dialog open={showResolveModal} onOpenChange={setShowResolveModal}>
+              <DialogTrigger asChild>
+                <Button className="bg-green-600 hover:bg-green-500 text-black">
+                  <span className="flex items-center">
+                    <History className="w-4 h-4 mr-2" />
+                    Resolve Market
+                  </span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[625px] bg-gray-800 border-none pixelated-border">
+                <DialogHeader>
+                  <DialogTitle className="font-pixel text-xl text-green-300">
+                    Resolve Market
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-gray-300">
+                    Choose the outcome of this prediction market and provide
+                    proof.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="outcome" className="font-pixel text-lg">
+                      Outcome
+                    </Label>
+                    <RadioGroup
+                      value={
+                        resolveResult === null
+                          ? ""
+                          : resolveResult
+                          ? "yes"
+                          : "no"
+                      }
+                      onValueChange={(value) =>
+                        setResolveResult(value === "yes")
+                      }
+                      className="flex gap-6 pt-2 "
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="yes"
+                          id="yes"
+                          className="border-green-400 text-green-400"
+                        />
+                        <Label
+                          htmlFor="yes"
+                          className="font-pixel text-lg text-green-400"
+                        >
+                          YES
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="no"
+                          id="no"
+                          className="border-red-400 text-red-400"
+                        />
+                        <Label
+                          htmlFor="no"
+                          className="font-pixel text-lg text-red-400"
+                        >
+                          NO
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Label htmlFor="proof" className="font-pixel text-lg">
+                      Proof
+                    </Label>
+                    <div className="bg-gray-700 rounded-md pixelated-border p-1">
+                      <Input
+                        id="proof"
+                        value={proof}
+                        onChange={(e) => setProof(e.target.value)}
+                        placeholder="Enter verifiable proof for the outcome..."
+                        className="bg-transparent border-none font-mono focus-visible:ring-green-500"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Provide clear, verifiable evidence for the outcome you've
+                      selected.
+                    </p>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowResolveModal(false)}
+                    className="bg-transparent border border-gray-600  hover:bg-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    onClick={handleResolve}
+                    disabled={
+                      isResolving || resolveResult === null || !proof.trim()
+                    }
+                    className="bg-green-600 hover:bg-green-500 text-black "
+                  >
+                    {isResolving ? (
+                      <span className="flex items-center">
+                        <span className="w-4 h-4 border-2 border-t-transparent border-black rounded-full animate-spin mr-2"></span>
+                        Resolving...
+                      </span>
+                    ) : (
+                      "Confirm Resolution"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         {market.resolved && market.won && !market.claimed && (
           <TooltipProvider>
             <Tooltip>

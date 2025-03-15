@@ -8,7 +8,7 @@ dataSources:
     name: PredictionMarket
     network: sepolia
     source:
-      address: "0x0E2119Ccd170485543A77FD4fEc06D0668A350a1"
+      address: "0x0ffcAb38F5Fd76F1Eec27a46eD37D184Ed9B0931"
       abi: PredictionMarket
       startBlock: 7900190
     mapping:

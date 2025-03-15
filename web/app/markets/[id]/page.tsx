@@ -5,7 +5,6 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import MarketDetails from "../../components/MarketDetails";
 import BettingInterface from "../../components/BettingInterface";
 import MarketStats from "../../components/MarketStats";
-import LmsrExplainer from "../../components/LmsrExplainer";
 import type { Market } from "../../components/MarketPreview";
 import { useEffect, useState } from "react";
 import { fetchMarket } from "@/lib/fetchMarket";

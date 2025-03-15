@@ -22,7 +22,7 @@ contract DeployPredictionMarket is Script {
 
         // Mint some tokens to the deployer for testing
         address deployer = 0x4b4b30e2E7c6463b03CdFFD6c42329D357205334;
-        uint256 mintAmount = 1_000_000 * 10**18; // 1 million tokens
+        uint256 mintAmount = 1_000 * 10**18; // 1 million tokens
         mockUSDC.mint(deployer, mintAmount);
         console.log("Minted 1,000,000 tokens to deployer:", deployer);
 

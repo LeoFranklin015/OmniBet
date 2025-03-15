@@ -3,7 +3,7 @@ import { sepolia } from "viem/chains";
 
 export const client = createPublicClient({
   chain: sepolia,
-  transport: http(),
+  transport: http("https://endpoints.omniatech.io/v1/eth/sepolia/public"),
 });
 
 export const walletClient = createWalletClient({

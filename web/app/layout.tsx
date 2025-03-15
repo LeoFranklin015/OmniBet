@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${pressStart2P.variable} ${vt323.variable} font-sans bg-gray-900 text-green-400 dark:bg-gray-900 dark:text-green-400`}
+        className={`${pressStart2P.variable} ${vt323.variable} font-sans bg-gray-900 text-green-400 dark:bg-gray-900 dark:text-green-400 flex flex-col min-h-screen`}
       >
         <Provider>
           <header className="p-8 flex flex-col">
@@ -43,12 +43,17 @@ export default function RootLayout({
             </div>
           </header>
           <PixelatedBackground />
-          <div className=" mx-auto px-4">
+
+          {/* Ensure the main content takes up available space */}
+          <div className="flex-grow mx-auto px-4">
             <main>{children}</main>
-            <footer className="py-8 text-center font-mono">
-              © 2025 OmniBets. All rights pixelated.
-            </footer>
           </div>
+
+          {/* Move footer outside the inner div, so it sticks to the bottom */}
+          <footer className="py-8 text-center font-mono w-full">
+            © 2025 OmniBets. All rights pixelated.
+          </footer>
+
           <FloatingPixels />
           <SoundEffect />
         </Provider>

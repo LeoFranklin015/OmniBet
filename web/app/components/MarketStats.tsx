@@ -58,7 +58,7 @@ export default function MarketStats({
             <span className="font-mono text-lg">Current Odds</span>
           </div>
           <div className="font-mono text-2xl">
-            YES: {yesPercentage}% / NO: {noPercentage}%
+            YES: {yesPercentage || 0}% / NO: {noPercentage || 0}%
           </div>
         </div>
 

@@ -38,6 +38,7 @@ interface UserMarket {
   totalNo: number;
   createdAt: Date;
   updatedAt: Date;
+  creator: string;
 }
 
 interface UserMarketData {
@@ -307,6 +308,7 @@ export default function MyMarketsPage() {
                 totalNo: parseFloat(ethers.formatEther(market.market.totalNo)),
                 createdAt: formatTimestamp(market.market.createdAt),
                 updatedAt: formatTimestamp(market.market.updatedAt),
+                creator: market.market.creator,
               };
 
               return (

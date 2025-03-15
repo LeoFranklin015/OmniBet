@@ -17,9 +17,9 @@ contract ReadMarketsScript is Script {
         // mockUSDC.mint(address(this), 100000000000000000000);
         // mockUSDC.approve(address(market), type(uint256).max);
         
-        vm.startBroadcast();
-        market.buy(1, true, ud(1000000000000000000));
-        vm.stopBroadcast();
+        // vm.startBroadcast();
+        // market.buy(1, true, ud(1000000000000000000));
+        // vm.stopBroadcast();
         // Get all market IDs
         uint256[] memory marketIds = market.getMarketIds();
         console.log("Total markets found:", marketIds.length);
