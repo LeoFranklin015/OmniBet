@@ -10,7 +10,7 @@ contract CreateMarket is Script {
         // Load the PredictionMarket contract address from environment variable
         // or use a hardcoded address if preferred
         address predictionMarketAddress = vm.envOr("PREDICTION_MARKET_ADDRESS", 
-                                                  address(0x9AA0AC61A31F46d36ad7C28F8FECA68CE5D09798));
+                                                  address(0x2666beb71e0Dd95223B98C945C9808c1b07c271e));
         
         // Create a reference to the PredictionMarket contract
         PredictionMarketV2 market = PredictionMarketV2(payable(predictionMarketAddress));
@@ -29,13 +29,16 @@ contract CreateMarket is Script {
         
         vm.startBroadcast();
         
-        uint256 marketId = market.createMarket(question, endTime);
+        // uint256 marketId = market.createMarket(question, endTime);
 
-        market.buy(marketId, true, ud(1000000000000000000));
-        market.buy(marketId, false, ud(1000000000000000000));
+        // market.buy(marketId, true, ud(1000000000000000000));
+        // market.buy(marketId, false, ud(1000000000000000000));
+
+        market.resolve(8, true, "");
+        // market.claimReward(2);
         vm.stopBroadcast();
         
         console.log("Market created successfully!");
-        console.log("Market ID:", marketId);
+        // console.log("Market ID:", marketId);
     }
 }

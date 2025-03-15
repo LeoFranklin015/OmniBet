@@ -24,6 +24,7 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
     uint256 public TOKEN_BROUGHT_SUB = 0x318c6e83dc99fba0aa3da9d2b1e26eab8c47b20821e88297b66fb7cb8a05189b;
 
     event MarketCreated(uint256 marketId);
+    event MarketResolved(uint256 marketId);
 
     constructor(
         address _service,
@@ -124,7 +125,10 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
 
             } else if (log.topic_0 == MARKET_RESOLVED) {
                 // TODO: Handle the MarketResolved event
-
+                uint256 marketId  = uint256(log.topic_1);
+                emit MarketResolved(marketId);
+                bytes memory payload = abi.encodeWithSignature("resolveMarket(address,uint256)", address(0), marketId);
+                emit Callback(destinationChainId, SubPredictionMarket, GAS_LIMIT, payload);
             }
         } else if (log._contract == SubPredictionMarket) {
             // TODO: Handle the MarketCreated event

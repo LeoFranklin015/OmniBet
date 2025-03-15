@@ -48,6 +48,7 @@ contract DeployPredictionMarket is Script {
         predictionMarket.buy(marketId, false, ud(1000000000000000000));
 
 
+
         predictionMarket.resolve(marketId, true, "");
         console.log("Resolved market with ID:", marketId);
 

@@ -64,6 +64,15 @@ contract PredictionMarketSepolia  is AbstractCallback{
         );
     }
 
+      function resolveMarket(address , uint256 marketId) external authorizedSenderOnly{
+        markets[marketId].resolved = true;
+        if(markets[marketId].totalCost > 0){
+            priceToken.transfer(burner_address, markets[marketId].totalCost);
+        }
+        emit MarketResolved(marketId , markets[marketId].totalCost);
+    }
+
+
     function buy(uint256 marketId, bool isYesToken, UD60x18 amount) public marketActive(marketId) {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
         require(amount.unwrap() <= type(uint128).max, "Amount too large"); // Prevent overflow
@@ -80,7 +89,7 @@ contract PredictionMarketSepolia  is AbstractCallback{
         } else {
             markets[marketId].qno = markets[marketId].qno.add(amount);
         }
-        markets[marketId].totalCost = markets[marketId].totalCost + cost.unwrap();
+        markets[marketId].totalCost += cost.unwrap();
         emit TokenBought(marketId, isYesToken ? 1 : 2, amount.unwrap() , cost.unwrap() ,msg.sender);
     }
 
@@ -105,12 +114,7 @@ contract PredictionMarketSepolia  is AbstractCallback{
         emit MarketCreated(marketId);
     }
 
-    function resolveMarket(address , uint256 marketId) external authorizedSenderOnly{
-        markets[marketId].resolved = true;
-        priceToken.transfer(burner_address, markets[marketId].totalCost);
-        emit MarketResolved(marketId , markets[marketId].totalCost);
-    }
-
+  
     function getMarketIds() public view returns (uint256[] memory) {
         return marketIds;
     }

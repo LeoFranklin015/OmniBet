@@ -8,10 +8,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "lib/prb-math/src/UD60x18.sol";
 import "./LMSRLibrary.sol";
 import '../../../lib/reactive-lib/src/abstract-base/AbstractCallback.sol';
+import "./Token/MockUSDC.sol";
 contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
     using SafeERC20 for IERC20;
 
-    IERC20 public priceToken;
+    MockUSDC public priceToken;
 
     struct Market {
         uint256 id; // unique identifier for the market
@@ -27,6 +28,7 @@ contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
         UD60x18 qNo; // NO token quantity for this market
         bool liquidityInitialized; // tracks if liquidity is initialized
         address creator; // creator of the market
+        uint256 priceTokenFromDestination; // price token from destination
     }
 
     // Track user balances internally
@@ -97,7 +99,7 @@ contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
         
         DECIMALS = ud(1e18);
         LIQUIDITY_PARAMETER = ud(10e18);
-        priceToken = IERC20(_priceToken);
+        priceToken = MockUSDC(_priceToken);
     }
 
     modifier onlyResolver(uint256 marketId) {
@@ -140,6 +142,7 @@ contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
 
         markets[marketId].resolved = true;
         markets[marketId].won = isYesWon;
+        priceToken.mint(address(this), markets[marketId].priceTokenFromDestination);
 
         emit MarketResolved(marketId, markets[marketId].won, markets[marketId].totalPriceToken);
     }
@@ -334,7 +337,8 @@ contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
             qYes: ud(0),
             qNo: ud(0),
             liquidityInitialized: false,
-            creator: msg.sender
+            creator: msg.sender,
+            priceTokenFromDestination: 0
         });
         initializeLiquidity(marketId);
         emit MarketCreated(marketId, _question, _endTime, msg.sender);
@@ -357,10 +361,8 @@ contract PredictionMarketV2 is Ownable, ReentrancyGuard , AbstractCallback{
             markets[marketId].totalNo += amount.unwrap();
         }
         markets[marketId].totalPriceToken += cost;
+        markets[marketId].priceTokenFromDestination += cost;
         emit MarketUpdated(marketId, isYesToken, amount.unwrap(), account, cost);
     }
-
-
-
 
 }

@@ -9,7 +9,7 @@ import {UD60x18} from "lib/prb-math/src/UD60x18.sol";
 contract ReadMarketsScript is Script {
     function run() public {
         // Replace with your deployed contract address
-        address contractAddress = address(0xF843DeE7892e899cF7b0d79A5d952a1b0da25b5f); // TODO: Update with actual address
+        address contractAddress = address(0x77D941FDC4D95347bf877094aD96C7a4730c7dD3); // TODO: Update with actual address
         // Create an instance of the contract
         PredictionMarketSepolia market = PredictionMarketSepolia(payable(contractAddress));
 
@@ -17,9 +17,9 @@ contract ReadMarketsScript is Script {
         // mockUSDC.mint(address(this), 100000000000000000000);
         // mockUSDC.approve(address(market), type(uint256).max);
         
-        vm.startBroadcast();
-        market.buy(1, true, ud(1000000000000000000));
-        vm.stopBroadcast();
+        // vm.startBroadcast();
+        // market.buy(8, true, ud(1000000000000000000));
+        // vm.stopBroadcast();
         // Get all market IDs
         uint256[] memory marketIds = market.getMarketIds();
         console.log("Total markets found:", marketIds.length);
@@ -34,6 +34,7 @@ contract ReadMarketsScript is Script {
             console.log("\n--- Market ID:", marketId, "---");
             console.log("YES tokens:", uint256(marketData.qyes.unwrap()) / 1e18);
             console.log("NO tokens:", uint256(marketData.qno.unwrap()) / 1e18);
+            console.log("Total cost:", uint256(marketData.totalCost));
             console.log("Resolved:", marketData.resolved);
             
             // If you want to calculate the current price of YES tokens
