@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,13 +11,13 @@ import USDCBalance from "./USDCBalance";
 
 import {
   PredictionMarketAddressSepoliaA,
+  PredictionMarketAddressSepoliaA_ABI,
   PredictionMarketAddressSepoliaB,
   USDC_ADDRESS_SEPOLIA_A,
   USDC_ADDRESS_SEPOLIA_B,
 } from "@/lib/const";
 import { useAccount } from "wagmi";
 import { client, walletClient } from "@/lib/client";
-import { erc20Abi } from "viem";
 import MintandApprove from "./MintandApprove";
 
 interface BettingInterfaceProps {
@@ -30,7 +30,9 @@ function ethToNumber(weiValue: string): number {
 }
 
 export default function BettingInterface({ market }: BettingInterfaceProps) {
-  const [amount, setAmount] = useState("");
+  // Separate states for YES and NO amounts
+  const [yesAmount, setYesAmount] = useState("");
+  const [noAmount, setNoAmount] = useState("");
   const [estimatedReturn, setEstimatedReturn] = useState("0");
   const [selectedChain, setSelectedChain] = useState("chainA");
   const [marketAddress, setMarketAddress] = useState(
@@ -39,31 +41,58 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   const [usdcAddress, setUsdcAddress] = useState(USDC_ADDRESS_SEPOLIA_A);
   const { address } = useAccount();
 
+  // Add refs for the input elements
+  const yesInputRef = useRef<HTMLInputElement>(null);
+  const noInputRef = useRef<HTMLInputElement>(null);
+
   // Convert Wei values to numbers
   const totalYesNum = ethToNumber(market.totalYes);
   const totalNoNum = ethToNumber(market.totalNo);
   const totalStaked = ethToNumber(market.totalPriceToken);
 
+  // Chain-specific data (in a real app, this would be different for each chain)
+  const chainData = {
+    chainA: {
+      name: "Sepolia A",
+      icon: "A",
+      color: "bg-blue-400",
+    },
+    chainB: {
+      name: "Sepolia B",
+      icon: "B",
+      color: "bg-purple-400",
+    },
+  };
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const value = e.target.value;
-    setAmount(value);
+    const isYesTab = e.target.name === "yes-amount";
 
-    // Simple estimation calculation
-    if (value && !isNaN(Number(value))) {
-      const inputAmount = Number(value);
-      const yesPercentage = totalYesNum / (totalYesNum + totalNoNum);
-
-      // Simplified LMSR return calculation
-      let estimatedReturnValue;
-      if (e.target.name === "yes-amount") {
-        estimatedReturnValue = inputAmount / yesPercentage;
+    // Only update if the value is a valid number or empty
+    if (value === "" || !isNaN(Number(value))) {
+      if (isYesTab) {
+        setYesAmount(value);
       } else {
-        estimatedReturnValue = inputAmount / (1 - yesPercentage);
+        setNoAmount(value);
       }
 
-      setEstimatedReturn(estimatedReturnValue.toFixed(2));
-    } else {
-      setEstimatedReturn("0");
+      // Calculate estimated return only if there's a valid number
+      if (value && !isNaN(Number(value))) {
+        const inputAmount = Number(value);
+        const yesPercentage = totalYesNum / (totalYesNum + totalNoNum);
+
+        let estimatedReturnValue;
+        if (isYesTab) {
+          estimatedReturnValue = inputAmount / yesPercentage;
+        } else {
+          estimatedReturnValue = inputAmount / (1 - yesPercentage);
+        }
+
+        setEstimatedReturn(estimatedReturnValue.toFixed(2));
+      } else {
+        setEstimatedReturn("0");
+      }
     }
   };
 
@@ -81,18 +110,25 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   const endTimeMs = Number(market.endTime) * 1000;
   const isDisabled = market.resolved || endTimeMs < Date.now();
 
-  // Chain-specific data (in a real app, this would be different for each chain)
-  const chainData = {
-    chainA: {
-      name: "Sepolia A",
-      icon: "A",
-      color: "bg-blue-400",
-    },
-    chainB: {
-      name: "Sepolia B",
-      icon: "B",
-      color: "bg-purple-400",
-    },
+  // Betting Form Handlers
+
+  const handleBet = async (
+    amount: number,
+    side: "yes" | "no",
+    marketAddress: string
+  ) => {
+    if (!address) {
+      console.error("No wallet connected");
+      return;
+    }
+    const tx = await walletClient.writeContract({
+      address: marketAddress as `0x${string}`,
+      abi: PredictionMarketAddressSepoliaA_ABI,
+      functionName: "buy",
+      args: [Number(market.id), side === "yes", BigInt(amount * 1e18)],
+      account: address as `0x${string}`,
+    });
+    await client.waitForTransactionReceipt({ hash: tx });
   };
 
   const BettingForm = () => (
@@ -100,13 +136,13 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
       <TabsList className="grid grid-cols-2 mb-4 p-1 bg-gray-700 rounded-lg">
         <TabsTrigger
           value="yes"
-          className=" data-[state=active]:bg-green-500 data-[state=active]:text-black transition-all duration-200"
+          className="data-[state=active]:bg-green-500 data-[state=active]:text-black transition-all duration-200"
         >
           YES
         </TabsTrigger>
         <TabsTrigger
           value="no"
-          className=" data-[state=active]:bg-red-500 data-[state=active]:text-black transition-all duration-200"
+          className="data-[state=active]:bg-red-500 data-[state=active]:text-black transition-all duration-200"
         >
           NO
         </TabsTrigger>
@@ -119,12 +155,20 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
               Amount to Bet
             </label>
             <Input
+              ref={yesInputRef}
               type="number"
               name="yes-amount"
               placeholder="0.00"
-              value={amount}
+              value={yesAmount}
               onChange={handleAmountChange}
               className="text-xl p-2"
+              onFocus={(e) => {
+                // Preserve cursor position on focus
+                const value = e.target.value;
+                e.target.value = "";
+                e.target.value = value;
+              }}
+              step="any" // Allow decimal numbers
             />
           </div>
 
@@ -143,7 +187,8 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
 
           <Button
             className="w-full font-pixel pixelated-border"
-            disabled={!amount || isNaN(Number(amount))}
+            disabled={!yesAmount || isNaN(Number(yesAmount))}
+            onClick={() => handleBet(Number(yesAmount), "yes", marketAddress)}
           >
             Bet on YES <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
@@ -157,12 +202,20 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
               Amount to Bet
             </label>
             <Input
+              ref={noInputRef}
               type="number"
               name="no-amount"
               placeholder="0.00"
-              value={amount}
+              value={noAmount}
               onChange={handleAmountChange}
               className="text-xl p-2"
+              onFocus={(e) => {
+                // Preserve cursor position on focus
+                const value = e.target.value;
+                e.target.value = "";
+                e.target.value = value;
+              }}
+              step="any" // Allow decimal numbers
             />
           </div>
 
@@ -181,7 +234,8 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
 
           <Button
             className="w-full font-pixel pixelated-border"
-            disabled={!amount || isNaN(Number(amount))}
+            disabled={!noAmount || isNaN(Number(noAmount))}
+            onClick={() => handleBet(Number(noAmount), "no", marketAddress)}
           >
             Bet on NO <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
