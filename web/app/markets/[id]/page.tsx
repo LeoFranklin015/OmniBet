@@ -1,7 +1,7 @@
 "use client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import MarketDetails from "../../components/MarketDetails";
 import BettingInterface from "../../components/BettingInterface";
 import MarketStats from "../../components/MarketStats";
@@ -66,7 +66,9 @@ export default function MarketPage({ params }: { params: { id: string } }) {
   return (
     <div>
       {loading ? (
-        <div>Loading...</div>
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="w-40 h-40 animate-spin" />
+        </div>
       ) : (
         <>
           <Link

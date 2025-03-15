@@ -1,13 +1,24 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Info } from "lucide-react";
 import type { Market } from "../components/MarketPreview";
 import USDCBalance from "./USDCBalance";
+
+import {
+  PredictionMarketAddressSepoliaA,
+  PredictionMarketAddressSepoliaB,
+  USDC_ADDRESS_SEPOLIA_A,
+  USDC_ADDRESS_SEPOLIA_B,
+} from "@/lib/const";
+import { useAccount } from "wagmi";
+import { client, walletClient } from "@/lib/client";
+import { erc20Abi } from "viem";
+import MintandApprove from "./MintandApprove";
 
 interface BettingInterfaceProps {
   market: Market;
@@ -22,6 +33,11 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   const [amount, setAmount] = useState("");
   const [estimatedReturn, setEstimatedReturn] = useState("0");
   const [selectedChain, setSelectedChain] = useState("chainA");
+  const [marketAddress, setMarketAddress] = useState(
+    PredictionMarketAddressSepoliaA
+  );
+  const [usdcAddress, setUsdcAddress] = useState(USDC_ADDRESS_SEPOLIA_A);
+  const { address } = useAccount();
 
   // Convert Wei values to numbers
   const totalYesNum = ethToNumber(market.totalYes);
@@ -51,6 +67,16 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
     }
   };
 
+  useEffect(() => {
+    if (selectedChain === "chainA") {
+      setMarketAddress(PredictionMarketAddressSepoliaA);
+      setUsdcAddress(USDC_ADDRESS_SEPOLIA_A);
+    } else {
+      setMarketAddress(PredictionMarketAddressSepoliaB);
+      setUsdcAddress(USDC_ADDRESS_SEPOLIA_B);
+    }
+  }, [selectedChain]);
+
   // Convert endTime from seconds to milliseconds for timestamp comparison
   const endTimeMs = Number(market.endTime) * 1000;
   const isDisabled = market.resolved || endTimeMs < Date.now();
@@ -59,12 +85,12 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   const chainData = {
     chainA: {
       name: "Sepolia A",
-      icon: "E",
+      icon: "A",
       color: "bg-blue-400",
     },
     chainB: {
       name: "Sepolia B",
-      icon: "S",
+      icon: "B",
       color: "bg-purple-400",
     },
   };
@@ -168,11 +194,11 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
     <div className="bg-gray-800 rounded-lg pixelated-border p-6 sticky top-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-pixel mb-4">Place Your Bet</h3>
-        <USDCBalance />
+        <USDCBalance usdcAddress={usdcAddress} address={address || ""} />
       </div>
 
       {isDisabled ? (
-        <div className="bg-gray-700 p-4 rounded-lg font-mono text-center mb-4">
+        <div className="bg-gray-700 p-4 rounded-lg font-mono text-center mb-4 mt-8 text-lg">
           This market is no longer accepting bets
         </div>
       ) : (
@@ -217,9 +243,11 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
                     </div>
                   </div>
                   <div className="bg-gray-700 p-3 rounded-lg mb-4">
-                    <button className="w-full font-pixel pixelated-border  text-yellow-300 px-2 py-2">
-                      Mint & Approve USDC
-                    </button>
+                    <MintandApprove
+                      address={address || ""}
+                      usdcAddress={usdcAddress}
+                      marketAddress={marketAddress}
+                    />
                   </div>
                   <BettingForm />
                 </TabsContent>
