@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Info } from "lucide-react";
 import type { Market } from "../components/MarketPreview";
+import USDCBalance from "./USDCBalance";
 
 interface BettingInterfaceProps {
   market: Market;
@@ -165,7 +166,10 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
 
   return (
     <div className="bg-gray-800 rounded-lg pixelated-border p-6 sticky top-4">
-      <h3 className="text-lg font-pixel mb-4">Place Your Bet</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-pixel mb-4">Place Your Bet</h3>
+        <USDCBalance />
+      </div>
 
       {isDisabled ? (
         <div className="bg-gray-700 p-4 rounded-lg font-mono text-center mb-4">
@@ -213,8 +217,8 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
                     </div>
                   </div>
                   <div className="bg-gray-700 p-3 rounded-lg mb-4">
-                    <button className="w-full font-pixel pixelated-border">
-                      Mint USDC
+                    <button className="w-full font-pixel pixelated-border  text-yellow-300 px-2 py-2">
+                      Mint & Approve USDC
                     </button>
                   </div>
                   <BettingForm />

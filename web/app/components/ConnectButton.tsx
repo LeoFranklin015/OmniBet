@@ -56,7 +56,6 @@ export const CustomConnectButton = () => {
               }
               return (
                 <div className="flex items-center gap-10">
-                  <USDCBalance />
                   <button
                     onClick={openChainModal}
                     style={{ display: "flex", alignItems: "center" }}
