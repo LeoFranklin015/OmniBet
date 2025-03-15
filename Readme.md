@@ -1,11 +1,2 @@
-- [] Make the betting from UI
-- [] Resolve
-- [] Lock and burn
-- [] Add Your markets Page
-- [] Demo
+![image](https://github.com/user-attachments/assets/002e164a-0f84-468b-9637-e6dd2ade5ef8)
 
-P1-0x2666beb71e0Dd95223B98C945C9808c1b07c271e
-U1-0xe6499c7384422f15aeEF0297c2CA3d29FEcC8f2F
-
-P2-0x77D941FDC4D95347bf877094aD96C7a4730c7dD3
-U2-0x52b7735109Ef5931eC8661399135D67CFaDb3bFf
