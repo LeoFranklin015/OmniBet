@@ -137,7 +137,7 @@ By using **Reactive Smart Contracts**, OmniBets:
 
 ## 🎥 **Demo Video**
 
-Check out the demo [here](https://youtu.be/aCqR4iyn8pM)
+Check out the demo [here](https://youtu.be/VwuhcRRxz2A)
 
 ---
 
