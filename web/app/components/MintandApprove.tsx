@@ -31,6 +31,10 @@ const MintandApprove = ({
       setStep(1);
 
       try {
+        if (!walletClient) {
+          throw new Error("Wallet not connected");
+        }
+
         const MintTx = await walletClient.writeContract({
           address: usdcAddress as `0x${string}`,
           abi: [

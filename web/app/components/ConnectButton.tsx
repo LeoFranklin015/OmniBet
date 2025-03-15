@@ -1,5 +1,5 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import USDCBalance from "./USDCBalance";
+import Image from "next/image";
 import Link from "next/link";
 export const CustomConnectButton = () => {
   return (
@@ -93,10 +93,12 @@ export const CustomConnectButton = () => {
                         }}
                       >
                         {chain.iconUrl && (
-                          <img
+                          <Image
                             alt={chain.name ?? "Chain icon"}
                             src={chain.iconUrl}
                             style={{ width: 30, height: 30 }}
+                            width={30}
+                            height={30}
                           />
                         )}
                       </div>

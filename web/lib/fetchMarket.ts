@@ -23,6 +23,7 @@ export const fetchMarket = async (marketId: string) => {
     }
   `;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await request(GRAPH_URL, query);
   console.log(data);
   return data.markets[0];

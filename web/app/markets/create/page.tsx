@@ -20,6 +20,10 @@ import { client, walletClient } from "@/lib/client";
 import { PredictionMarketAddressSepoliaA_ABI } from "@/lib/const";
 import { PredictionMarketAddressSepoliaA } from "@/lib/const";
 import { useAccount } from "wagmi";
+
+// Disable static generation for this page
+export const dynamic = "force-dynamic";
+
 export default function CreateMarketPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +64,11 @@ export default function CreateMarketPage() {
       if (!address) {
         throw new Error("No account found");
       }
+
+      if (!walletClient) {
+        throw new Error("Wallet not connected");
+      }
+
       // Simulate API delay
       const tx = await walletClient.writeContract({
         address: PredictionMarketAddressSepoliaA,
@@ -110,8 +119,8 @@ export default function CreateMarketPage() {
                       outcome.
                     </p>
                     <p>
-                      Example: "Will ETH price exceed $5000 by the end of the
-                      month?"
+                      {`Example: "Will ETH price exceed $5000 by the end of the
+                      month?"`}
                     </p>
                   </TooltipContent>
                 </Tooltip>

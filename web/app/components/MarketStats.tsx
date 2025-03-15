@@ -27,9 +27,9 @@ export default function MarketStats({
   className = "",
 }: MarketStatsProps) {
   // Convert Wei values to numbers
-  const totalYesNum = ethToNumber(market.totalYes);
-  const totalNoNum = ethToNumber(market.totalNo);
-  const totalStaked = ethToNumber(market.totalPriceToken);
+  const totalYesNum = ethToNumber(market.totalYes.toString());
+  const totalNoNum = ethToNumber(market.totalNo.toString());
+  const totalStaked = ethToNumber(market.totalPriceToken.toString());
 
   // Calculate probabilities
   const yesPercentage = Math.round(

@@ -96,17 +96,25 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
   const handleClaim = async () => {
     setIsClaiming(true);
 
-    const tx = await walletClient.writeContract({
-      address: PredictionMarketAddressSepoliaA,
-      abi: PredictionMarketAddressSepoliaA_ABI,
-      functionName: "claimReward",
-      args: [Number(market.id)],
-      account: address as `0x${string}`,
-    });
+    try {
+      if (!walletClient) {
+        throw new Error("Wallet not connected");
+      }
 
-    await client.waitForTransactionReceipt({ hash: tx });
+      const tx = await walletClient.writeContract({
+        address: PredictionMarketAddressSepoliaA,
+        abi: PredictionMarketAddressSepoliaA_ABI,
+        functionName: "claimReward",
+        args: [Number(market.id)],
+        account: address as `0x${string}`,
+      });
 
-    setIsClaiming(false);
+      await client.waitForTransactionReceipt({ hash: tx });
+    } catch (error) {
+      console.error("Error claiming rewards:", error);
+    } finally {
+      setIsClaiming(false);
+    }
   };
 
   const handleResolve = async () => {
@@ -115,6 +123,10 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
     setIsResolving(true);
 
     try {
+      if (!walletClient) {
+        throw new Error("Wallet not connected");
+      }
+
       // Convert proof string to bytes32
       // For ethers v6
       const bytes32Proof = ethers.encodeBytes32String(proof);
@@ -142,8 +154,7 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
   // Determine primary position (YES if more YES tokens, NO if more NO tokens)
   const primaryPosition =
     market.yesInMarket >= market.noInMarket ? "YES" : "NO";
-  const primaryAmount =
-    primaryPosition === "YES" ? market.yesInMarket : market.noInMarket;
+
   const odds = calculateOdds(primaryPosition);
 
   return (
@@ -308,8 +319,8 @@ export default function UserMarketCard({ market }: UserMarketCardProps) {
                       />
                     </div>
                     <p className="text-sm text-gray-400">
-                      Provide clear, verifiable evidence for the outcome you've
-                      selected.
+                      {`Provide clear, verifiable evidence for the outcome you've
+                      selected.`}
                     </p>
                   </div>
                 </div>

@@ -60,7 +60,7 @@ const USDCBalance = ({
         }
       }
     },
-    [client, usdcAddress, address]
+    [usdcAddress, address]
   );
 
   useEffect(() => {

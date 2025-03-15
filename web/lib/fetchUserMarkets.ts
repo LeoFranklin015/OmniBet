@@ -37,6 +37,7 @@ export const fetchUserMarkets = async (address: string) => {
     }
   `;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await request(GRAPH_URL, query);
   console.log(data);
   return data.userMarkets;

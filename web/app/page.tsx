@@ -1,13 +1,15 @@
-import Link from "next/link"
-import HeroSection from "./components/HeroSection"
-import FeaturesSection from "./components/FeaturesSection"
-import HowItWorks from "./components/HowItWorks"
-import MarketPreview from "./components/MarketPreview"
-import { markets } from "./data/markets"
+import Link from "next/link";
+import HeroSection from "./components/HeroSection";
+import FeaturesSection from "./components/FeaturesSection";
+import HowItWorks from "./components/HowItWorks";
+import MarketPreview from "./components/MarketPreview";
+import { markets } from "./data/markets";
 
 export default function Home() {
   // Get top 3 markets by total staked
-  const topMarkets = [...markets].sort((a, b) => b.totalStaked - a.totalStaked).slice(0, 3)
+  const topMarkets = [...markets]
+    .sort((a, b) => b.totalStaked - a.totalStaked)
+    .slice(0, 3);
 
   return (
     <div className="space-y-16">
@@ -32,6 +34,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  )
+  );
 }
-

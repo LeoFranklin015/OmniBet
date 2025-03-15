@@ -11,7 +11,6 @@ import USDCBalance from "./USDCBalance";
 
 import {
   PredictionMarketAddressSepoliaA,
-  PredictionMarketAddressSepoliaA_ABI,
   PredictionMarketAddressSepoliaB,
   PredictionMarketAddressSepoliaB_ABI,
   USDC_ADDRESS_SEPOLIA_A,
@@ -49,9 +48,8 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
   const noInputRef = useRef<HTMLInputElement>(null);
 
   // Convert Wei values to numbers
-  const totalYesNum = ethToNumber(market.totalYes);
-  const totalNoNum = ethToNumber(market.totalNo);
-  const totalStaked = ethToNumber(market.totalPriceToken);
+  const totalYesNum = ethToNumber(market.totalYes.toString());
+  const totalNoNum = ethToNumber(market.totalNo.toString());
 
   // Chain-specific data (in a real app, this would be different for each chain)
   const chainData = {
@@ -131,16 +129,31 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
       console.error("No wallet connected");
       return;
     }
-    if (selectedChain === "chainA") {
+
+    if (!walletClient) {
+      console.error("Wallet client not initialized");
+      return;
     }
-    const tx = await walletClient.writeContract({
-      address: marketAddress as `0x${string}`,
-      abi: PredictionMarketAddressSepoliaB_ABI,
-      functionName: "buy",
-      args: [Number(market.id), side === "yes", BigInt(amount * 1e18)],
-      account: address as `0x${string}`,
-    });
-    await client.waitForTransactionReceipt({ hash: tx });
+
+    try {
+      const tx = await walletClient.writeContract({
+        address: marketAddress as `0x${string}`,
+        abi: PredictionMarketAddressSepoliaB_ABI,
+        functionName: "buy",
+        args: [Number(market.id), side === "yes", BigInt(amount * 1e18)],
+        account: address as `0x${string}`,
+      });
+      await client.waitForTransactionReceipt({ hash: tx });
+
+      // Reset input field after successful bet
+      if (side === "yes") {
+        setYesAmount("");
+      } else {
+        setNoAmount("");
+      }
+    } catch (error) {
+      console.error("Error placing bet:", error);
+    }
   };
 
   const BettingForm = () => (

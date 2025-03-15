@@ -2,20 +2,20 @@ import Link from "next/link";
 import { Clock, Check, X } from "lucide-react";
 
 export interface Market {
-  id: string;
+  id: string | number;
   question: string;
-  endTime: string; // timestamp in seconds
+  endTime: string | number; // timestamp in seconds
   resolved: boolean;
-  result: boolean;
-  totalYes: string; // in Wei format
-  totalNo: string; // in Wei format
-  totalPriceToken: string; // in Wei format
+  result: boolean | null;
+  totalYes: string | number; // in Wei format
+  totalNo: string | number; // in Wei format
+  totalPriceToken: string | number; // in Wei format
   creator: string;
-  marketId: string;
+  marketId: string | number;
   liquidityInitialized: boolean;
   claimers: string[];
-  createdAt: string; // timestamp in seconds
-  updatedAt: string; // timestamp in seconds
+  createdAt: string | number; // timestamp in seconds
+  updatedAt: string | number; // timestamp in seconds
 }
 
 interface MarketPreviewProps {
@@ -29,9 +29,9 @@ export default function MarketPreview({ market }: MarketPreviewProps) {
   const isEnded = timeLeft <= 0;
 
   // Calculate totalStaked as the sum of totalYes and totalNo
-  const totalYesNum = Number(ethToNumber(market.totalYes));
-  const totalNoNum = Number(ethToNumber(market.totalNo));
-  const totalStaked = Number(ethToNumber(market.totalPriceToken));
+  const totalYesNum = Number(ethToNumber(market.totalYes.toString()));
+  const totalNoNum = Number(ethToNumber(market.totalNo.toString()));
+  const totalStaked = Number(ethToNumber(market.totalPriceToken.toString()));
 
   // Calculate YES probability
   const yesPercentage =

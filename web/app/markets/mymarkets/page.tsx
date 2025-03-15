@@ -11,10 +11,8 @@ import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { fetchUserMarkets } from "@/lib/fetchUserMarkets";
 
-// Helper function to format Wei values
-const formatEther = (wei: string) => {
-  return parseFloat(ethers.formatEther(wei)).toFixed(3);
-};
+// Disable static generation for this page
+export const dynamic = "force-dynamic";
 
 // Helper function to format timestamp
 const formatTimestamp = (timestamp: string) => {
