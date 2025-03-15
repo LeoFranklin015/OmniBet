@@ -13,6 +13,7 @@ import {
   PredictionMarketAddressSepoliaA,
   PredictionMarketAddressSepoliaA_ABI,
   PredictionMarketAddressSepoliaB,
+  PredictionMarketAddressSepoliaB_ABI,
   USDC_ADDRESS_SEPOLIA_A,
   USDC_ADDRESS_SEPOLIA_B,
 } from "@/lib/const";
@@ -121,9 +122,11 @@ export default function BettingInterface({ market }: BettingInterfaceProps) {
       console.error("No wallet connected");
       return;
     }
+    if (selectedChain === "chainA") {
+    }
     const tx = await walletClient.writeContract({
       address: marketAddress as `0x${string}`,
-      abi: PredictionMarketAddressSepoliaA_ABI,
+      abi: PredictionMarketAddressSepoliaB_ABI,
       functionName: "buy",
       args: [Number(market.id), side === "yes", BigInt(amount * 1e18)],
       account: address as `0x${string}`,

@@ -153,7 +153,7 @@ contract CrossChainAggregator is IReactive, AbstractReactive {
                         "updateMarket(address,uint256,bool,uint256,address,uint256)",
                         address(0),
                         marketId,
-                        true,
+                        false,
                         amount,
                         buyer,
                         cost

@@ -9,7 +9,7 @@ import {UD60x18} from "lib/prb-math/src/UD60x18.sol";
 contract ReadMarketsScript is Script {
     function run() public {
         // Replace with your deployed contract address
-        address contractAddress = address(0x77D941FDC4D95347bf877094aD96C7a4730c7dD3); // TODO: Update with actual address
+        address contractAddress = address(0x1033e19794D5f63672Aa1Cb1d1B243F2F3400E94); // TODO: Update with actual address
         // Create an instance of the contract
         PredictionMarketSepolia market = PredictionMarketSepolia(payable(contractAddress));
 
@@ -17,9 +17,9 @@ contract ReadMarketsScript is Script {
         // mockUSDC.mint(address(this), 100000000000000000000);
         // mockUSDC.approve(address(market), type(uint256).max);
         
-        // vm.startBroadcast();
-        // market.buy(8, true, ud(1000000000000000000));
-        // vm.stopBroadcast();
+        vm.startBroadcast();
+        market.buy(1, true, ud(1000000000000000000));
+        vm.stopBroadcast();
         // Get all market IDs
         uint256[] memory marketIds = market.getMarketIds();
         console.log("Total markets found:", marketIds.length);

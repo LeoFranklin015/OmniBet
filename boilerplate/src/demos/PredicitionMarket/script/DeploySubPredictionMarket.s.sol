@@ -36,23 +36,6 @@ contract DeployPredictionMarketSepolia is Script {
         mockUSDC.approve(address(predictionMarket), type(uint256).max);
         console.log("Approved PredictionMarketSepolia to spend MockUSDC");
 
-        // Create a sample market
-        // uint256 marketId = 1;
-        // predictionMarket.createMarket(marketId);
-        // console.log("Created sample market with ID:", marketId);
-
-        // // Buy some YES tokens for the market
-        // predictionMarket.buy(marketId, true, ud(1000000000000000000));
-        // console.log("Bought 1 YES token for market:", marketId);
-
-        // // Buy some NO tokens for the market
-        // predictionMarket.buy(marketId, false, ud(1000000000000000000));
-        // console.log("Bought 1 NO token for market:", marketId);
-
-        // // Update the market with additional tokens
-        // predictionMarket.updateMarket(marketId, true, ud(500000000000000000));
-        // console.log("Updated market with additional 0.5 YES tokens");
-
         vm.stopBroadcast();
         console.log("Deployment and setup complete!");
     }

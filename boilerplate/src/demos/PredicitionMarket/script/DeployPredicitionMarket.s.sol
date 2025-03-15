@@ -29,29 +29,6 @@ contract DeployPredictionMarket is Script {
         // Approve tokens for the prediction market
         mockUSDC.approve(address(predictionMarket), type(uint256).max);
         console.log("Approved PredictionMarket to spend MockUSDC");
-
-        // Create a sample market
-        uint256 endTime = block.timestamp + 7 days;
-        uint256 marketId = predictionMarket.createMarket(
-            "Will ETH price exceed $5000 by the end of the month?", 
-            endTime
-        );
-        
-        console.log("Created sample market with ID:", marketId);
-        console.log("Market question: Will ETH price exceed $5000 by the end of the month?");
-        console.log("Market end time:", endTime);
-
-        // Buy some tokens for the market
-        predictionMarket.buy(marketId, true, ud(1000000000000000000));
-
-        // Buy some tokens for the market
-        predictionMarket.buy(marketId, false, ud(1000000000000000000));
-
-
-
-        predictionMarket.resolve(marketId, true, "");
-        console.log("Resolved market with ID:", marketId);
-
         vm.stopBroadcast();
         console.log("Deployment and setup complete!");
     }
