@@ -135,9 +135,9 @@ By using **Reactive Smart Contracts**, OmniBets:
 
 ---
 
-## 🎥 **Demo Video (To Be Added)**
+## 🎥 **Demo Video**
 
-Per the submission requirements, a 5-minute demo video showcasing the contract behavior will be added.
+Check out the demo [here](https://youtu.be/aCqR4iyn8pM)
 
 ---
 
