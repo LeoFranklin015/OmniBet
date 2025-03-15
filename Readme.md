@@ -20,7 +20,7 @@ OmniBets is a **cross-chain prediction market** that leverages **Reactive Smart 
 
 ### **Prerequisites**
 
-Set the following environment variables in your `.env` file:
+Set the following environment variables in your `.env` file or export in terminal:
 
 ```bash
 SOURCE_RPC_URL= <RPC URL of source chain>
@@ -32,6 +32,10 @@ CALLBACK_CONTRACT= <Callback Contract Address>
 PRIVATE_KEY= <Your private key>
 REACTIVE_RPC= <Reactive RPC URL>
 REACTIVE_PRIVATE_KEY= <Reactive Private Key>
+```
+
+```bash
+cd boilerplate
 ```
 
 ### **1️⃣ Deploy Main Prediction Market (Sepolia)**
