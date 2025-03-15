@@ -13,4 +13,33 @@ type Market @entity {
   createdAt: BigInt! # timestamp
   updatedAt: BigInt! # timestamp
   claimers: [Bytes!]! # address[]
+  participants: [UserMarket!]! @derivedFrom(field: "market") # Add relation to UserMarket
+}
+
+type User @entity {
+  id: Bytes! # User address
+  userAddress: Bytes!
+  marketsParticipated: [UserMarket!]! @derivedFrom(field: "user") # Relation to UserMarket
+  totalYesBought: BigInt! # Total YES tokens bought across all markets
+  totalNoBought: BigInt! # Total NO tokens bought across all markets
+  totalYesSold: BigInt! # Total YES tokens sold across all markets
+  totalNoSold: BigInt! # Total NO tokens sold across all markets
+  totalSpent: BigInt! # Total price tokens spent across all markets
+  totalReceived: BigInt! # Total price tokens received across all markets
+  totalRewards: BigInt! # Total rewards claimed across all markets
+}
+
+type UserMarket @entity {
+  id: String! # Unique identifier, e.g., `user_address-market_id`
+  user: User! # Relation to User
+  market: Market! # Relation to Market
+  yesBought: BigInt! # Total YES tokens bought in this market
+  noBought: BigInt! # Total NO tokens bought in this market
+  yesSold: BigInt! # Total YES tokens sold in this market
+  noSold: BigInt! # Total NO tokens sold in this market
+  yesInMarket: BigInt! # Total yes tokens  in this market
+  noInMarket: BigInt! # Total no tokens  in this market
+  spent: BigInt! # Total price tokens spent in this market
+  rewards: BigInt! # Total price tokens rewarded in this market
+  claimed: Boolean! # Whether the user has claimed their rewards
 }
