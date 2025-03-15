@@ -47,7 +47,7 @@ export default function CreateMarketPage() {
     setFormData((prev) => ({ ...prev, endTime: date }));
     console.log(date);
     const timestamp = date.getTime();
-    setTimestamp(timestamp);
+    setTimestamp(Math.floor(timestamp / 1000));
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

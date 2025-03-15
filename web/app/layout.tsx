@@ -7,6 +7,8 @@ import SoundEffect from "./components/SoundEffect";
 import PixelatedBackground from "./components/PixelatedBackground";
 import Provider from "@/components/Provider";
 import { CustomConnectButton } from "./components/ConnectButton";
+import BlinkingCursor from "./components/BlinkingCursor";
+import Link from "next/link";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -33,7 +35,10 @@ export default function RootLayout({
         <Provider>
           <header className="p-8 flex flex-col">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">OmniBets</h1>
+              <Link href="/" className="text-2xl font-bold">
+                OmniBets
+                <BlinkingCursor />
+              </Link>
               <CustomConnectButton />
             </div>
           </header>
